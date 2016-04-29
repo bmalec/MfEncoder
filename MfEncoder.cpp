@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-/* old
 #include <Windows.h>
 #include <mfapi.h>
 #include <mfidl.h>
@@ -11,17 +10,7 @@
 #include <propvarutil.h>
 #include <wmcodecdsp.h>
 #include <mftransform.h>
-*/
 
-#include <new>
-#include <mfidl.h>            // Media Foundation interfaces
-#include <mfapi.h>            // Media Foundation platform APIs
-#include <mferror.h>        // Media Foundation error codes
-#include <wmcontainer.h>    // ASF-specific components
-#include <wmcodecdsp.h>        // Windows Media DSP interfaces
-#include <Dmo.h>            // DMO objects
-#include <uuids.h>            // Definition for FORMAT_VideoInfo
-#include <propvarutil.h>
 
 const INT32 VIDEO_WINDOW_MSEC = 3000;
 
@@ -180,7 +169,7 @@ HRESULT SetEncodingProperties(const GUID guidMT, IPropertyStore* pProps)
 
     if (guidMT == MFMediaType_Audio)
     {
-      hr = InitPropVariantFromUInt32(98, &var);
+      hr = InitPropVariantFromUInt32(90, &var);
       if (FAILED(hr))
       {
         goto done;
@@ -220,6 +209,28 @@ done:
 
 
 
+void SetBooleanProperty(IPropertyStore *propertyStore, PROPERTYKEY key, bool value)
+{
+  PROPVARIANT propVar;
+
+  InitPropVariantFromBoolean(value, &propVar);
+  HRESULT hr = propertyStore->SetValue(key, propVar);
+  hr = S_OK;
+}
+
+
+void SetUint32Property(IPropertyStore *propertyStore, PROPERTYKEY key, UINT32 value)
+{
+  PROPVARIANT propVar;
+
+  InitPropVariantFromUInt32(value, &propVar);
+  HRESULT hr = propertyStore->SetValue(key, propVar);
+  hr = S_OK;
+}
+
+
+
+
 //-------------------------------------------------------------------
 //  GetOutputTypeFromWMAEncoder
 //  Gets a compatible output type from the Windows Media audio encoder.
@@ -234,89 +245,104 @@ HRESULT GetOutputTypeFromWMAEncoder(IMFMediaType** ppAudioType)
     return E_POINTER;
   }
 
-  IMFTransform* pMFT = NULL;
-  IMFMediaType* pType = NULL;
-  IPropertyStore* pProps = NULL;
-
   //We need to find a suitable output media type
   //We need to create the encoder to get the available output types
   //and discard the instance.
 
-  CLSID *pMFTCLSIDs = NULL;   // Pointer to an array of CLISDs. 
-  UINT32 cCLSID = 0;            // Size of the array.
+  IMFActivate **transformActivationObjs;
+  UINT32 transformCount;
 
-  MFT_REGISTER_TYPE_INFO tinfo;
+  MFT_REGISTER_TYPE_INFO regTypeInfo;
 
-  tinfo.guidMajorType = MFMediaType_Audio;
-  tinfo.guidSubtype = MFAudioFormat_WMAudioV9;
+  regTypeInfo.guidMajorType = MFMediaType_Audio;
+  regTypeInfo.guidSubtype = MFAudioFormat_WMAudioV9;
 
   // Look for an encoder.
-  HRESULT hr = MFTEnum(
-    MFT_CATEGORY_AUDIO_ENCODER,
-    0,                  // Reserved
-    NULL,                // Input type to match. None.
-    &tinfo,             // WMV encoded type.
-    NULL,               // Attributes to match. (None.)
-    &pMFTCLSIDs,        // Receives a pointer to an array of CLSIDs.
-    &cCLSID             // Receives the size of the array.
-    );
-  if (FAILED(hr))
-  {
-    goto done;
-  }
 
-  // MFTEnum can return zero matches.
-  if (cCLSID == 0)
-  {
-    hr = MF_E_TOPO_CODEC_NOT_FOUND;
-    goto done;
-  }
-  else
-  {
-    // Create the MFT decoder
-    hr = CoCreateInstance(pMFTCLSIDs[0], NULL,
-      CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pMFT));
+  HRESULT hr = MFTEnumEx(MFT_CATEGORY_AUDIO_ENCODER, MFT_ENUM_FLAG_TRANSCODE_ONLY, nullptr, &regTypeInfo, &transformActivationObjs, &transformCount);
 
-    if (FAILED(hr))
+  if ((hr != S_OK) || (transformCount < 1))
+    return hr;
+
+  // Regardless how many activation objects returned, just instantiate the first one
+  // (would I want to instantiate another?  Why?  Which one?)
+
+  IMFActivate *activationObj = *transformActivationObjs;
+  IMFTransform *mfEncoder;
+  WCHAR transformName[128];
+  UINT32 nameLen;
+
+  activationObj->GetString(MFT_FRIENDLY_NAME_Attribute, transformName, sizeof(transformName), &nameLen);
+
+  hr = activationObj->ActivateObject(IID_PPV_ARGS(&mfEncoder));
+
+  IPropertyStore *propertyStore;
+
+  hr = mfEncoder->QueryInterface(IID_PPV_ARGS(&propertyStore));
+
+  SetBooleanProperty(propertyStore, MFPKEY_VBRENABLED, true);
+  SetBooleanProperty(propertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, true);
+  SetUint32Property(propertyStore, MFPKEY_DESIRED_VBRQUALITY,90);
+
+  hr = propertyStore->Commit();
+
+  // enumerate output types and try to find the appropriate one for our purposes
+
+  UINT32 channelCount;
+  UINT32 samplesPerSecond;
+  UINT32 bitsPerSample;
+
+  DWORD index = 0;
+
+  while (true)
+  {
+    IMFMediaType *mediaType;
+
+    hr = mfEncoder->GetOutputAvailableType(0, index++, &mediaType);
+
+    if (hr == MF_E_NO_MORE_TYPES)
+      break;
+
+    // Get the AM_MEDIA_TYPE structure from the media type, in case we want to need
+    // to differentiate between Standard and Pro WMA codecs in the future...
+
+    AM_MEDIA_TYPE *amMediaType;
+    mediaType->GetRepresentation(AM_MEDIA_TYPE_REPRESENTATION, (LPVOID *)&amMediaType);
+    WAVEFORMATEX *waveFormat = (WAVEFORMATEX *)amMediaType->pbFormat;
+
+    // there's only a few things we're interested in with the output type, so only bother grabbing those values
+
+    hr = mediaType->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &channelCount);
+    hr = mediaType->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &samplesPerSecond);
+    hr = mediaType->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &bitsPerSample);
+
+    if ((channelCount == 2) && (samplesPerSecond == 44100) && (bitsPerSample == 16))
     {
-      goto done;
+      *ppAudioType = mediaType;
+      (*ppAudioType)->AddRef();
+      break;
+
     }
-
   }
 
-  // Get the encoder's property store
+  // release all the stupid activation pointers (because COM was such a GREAT idea)
 
-  hr = pMFT->QueryInterface(IID_PPV_ARGS(&pProps));
-  if (FAILED(hr))
+  for (UINT32 i = 0; i < transformCount; i++)
   {
-    goto done;
+    IMFActivate *temp = *(transformActivationObjs + i);
+    temp->Release();
   }
 
-  //Set encoding properties
-  hr = SetEncodingProperties(MFMediaType_Audio, pProps);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
+  // free the stupid activation array object (because COM was such an f'ing great idea)
+  // (did I ever mention I think COM was just... stupid?)
 
-  //Get the first output type
-  //You can loop through the available output types to choose 
-  //the one that meets your target requirements
-  hr = pMFT->GetOutputAvailableType(0, 0, &pType);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  //Return to the caller
-  *ppAudioType = pType;
-  (*ppAudioType)->AddRef();
+  CoTaskMemFree(transformActivationObjs);
 
 done:
-  SafeRelease(&pProps);
-  SafeRelease(&pType);
-  SafeRelease(&pMFT);
-  CoTaskMemFree(pMFTCLSIDs);
+//  SafeRelease(&pProps);
+//  SafeRelease(&pType);
+//  SafeRelease(&pMFT);
+  //CoTaskMemFree(pMFTCLSIDs);
   return hr;
 }
 
@@ -1301,9 +1327,9 @@ int main()
   IMFActivate *pFileSinkActivate = NULL;
   IMFTopology* pTopology = NULL;
 
-  hr = CreateMediaSource(L"c:\\users\\bmalec\\Ring05.wav", &source);
+  hr = CreateMediaSource(L"c:\\users\\bmalec\\babylon.wav", &source);
 
-  hr = CreateMediaSink(L"c:\\users\\bmalec\\Ring05.wma", source, &pFileSinkActivate);
+  hr = CreateMediaSink(L"c:\\users\\bmalec\\babylon.wma", source, &pFileSinkActivate);
 
 
   //Build the encoding topology.
