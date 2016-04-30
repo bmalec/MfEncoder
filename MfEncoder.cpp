@@ -10,6 +10,8 @@
 #include <propvarutil.h>
 #include <wmcodecdsp.h>
 #include <mftransform.h>
+#include "CommandLineParser.h"
+#include "Parameters.h"
 
 
 const INT32 VIDEO_WINDOW_MSEC = 3000;
@@ -269,7 +271,7 @@ HRESULT GetOutputTypeFromWMAEncoder(IMFMediaType** ppAudioType)
 
   IMFActivate *activationObj = *transformActivationObjs;
   IMFTransform *mfEncoder;
-  WCHAR transformName[128];
+  wchar_t transformName[128];
   UINT32 nameLen;
 
   activationObj->GetString(MFT_FRIENDLY_NAME_Attribute, transformName, sizeof(transformName), &nameLen);
@@ -284,7 +286,7 @@ HRESULT GetOutputTypeFromWMAEncoder(IMFMediaType** ppAudioType)
   SetBooleanProperty(propertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, true);
   SetUint32Property(propertyStore, MFPKEY_DESIRED_VBRQUALITY,90);
 
-  hr = propertyStore->Commit();
+// this fails with a not_implemented error  hr = propertyStore->Commit();
 
   // enumerate output types and try to find the appropriate one for our purposes
 
@@ -319,11 +321,17 @@ HRESULT GetOutputTypeFromWMAEncoder(IMFMediaType** ppAudioType)
     if ((channelCount == 2) && (samplesPerSecond == 44100) && (bitsPerSample == 16))
     {
       *ppAudioType = mediaType;
-      (*ppAudioType)->AddRef();
+//      (*ppAudioType)->AddRef();
       break;
-
     }
+    else
+    {
+      mediaType->Release();
+    }
+
   }
+
+  propertyStore->Release();
 
   // release all the stupid activation pointers (because COM was such a GREAT idea)
 
@@ -338,7 +346,7 @@ HRESULT GetOutputTypeFromWMAEncoder(IMFMediaType** ppAudioType)
 
   CoTaskMemFree(transformActivationObjs);
 
-done:
+//done:
 //  SafeRelease(&pProps);
 //  SafeRelease(&pType);
 //  SafeRelease(&pMFT);
@@ -1318,8 +1326,180 @@ done:
 
 
 
-int main()
+int wmain(int argc, wchar_t *argv[])
 {
+  Parameters parameters;
+
+  if (argc < 1)
+  {
+    printf("Command line help goes here...");
+    return 0;
+  }
+
+  CommandLineParser::Parse(argc, argv, &parameters);
+
+  // Verify that output folder exists, if specified
+  // (and add a '\' to it if it doesn't exist)
+
+  if (*parameters.OutputFolder)
+  {
+    WIN32_FILE_ATTRIBUTE_DATA fileData;
+
+    BOOL success = GetFileAttributesEx(parameters.OutputFolder, GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &fileData);
+
+    // check if the file system object exists, but it's not a directory...
+
+    if (success && ((fileData.dwFileAttributes & 0x10) == 0))
+    {
+      printf("Specified output directory is not a directory");
+      return 0;
+    }
+
+    if (!success)
+    {
+      printf("Specified output directory does not exist");
+      return 0;
+    }
+
+    size_t outputFolderLength = wcslen(parameters.OutputFolder);
+
+    if (outputFolderLength < MAX_PATH - 1)
+    {
+      if (*(parameters.OutputFolder + outputFolderLength - 1) != '\\')
+      {
+        *(parameters.OutputFolder + outputFolderLength) = '\\';
+        *(parameters.OutputFolder + outputFolderLength + 1) = '\0';
+      }
+    }
+  }
+
+  try
+  {
+    // Initialize COM & Media Foundation
+
+    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    HRESULT hr = MFStartup(MF_VERSION);
+
+// wmaencoder    MediaFoundationTransform *transform = LoadAppropriateTransform(&parameters);
+
+    // Use the Windows shell API to extract the path component from the input filename
+
+    wchar_t srcFileFolder[MAX_PATH];
+    wchar_t srcFileName[MAX_PATH];
+
+    wcscpy(srcFileFolder, parameters.InputFilename);
+
+    BOOL ret = PathRemoveFileSpec(srcFileFolder);
+
+    size_t srcFolderLength = wcslen(srcFileFolder);
+
+    if (srcFolderLength < MAX_PATH - 1)
+    {
+      if (srcFolderLength > 0)
+      {
+        if (*(srcFileFolder + srcFolderLength - 1) != '\\')
+        {
+          *(srcFileFolder + srcFolderLength) = '\\';
+          *(srcFileFolder + srcFolderLength + 1) = '\0';
+        }
+      }
+    }
+
+    // do some basic parsing of input filename, as FirstFirstFile / FindNext 
+    // does not return the full path so we'll have to prepend
+    // any directory info specified
+
+    WIN32_FIND_DATA findData;
+
+    HANDLE hFindFile = FindFirstFile(parameters.InputFilename, &findData);
+
+    IMFMediaSource *source = nullptr;
+    IMFActivate *pFileSinkActivate = nullptr;
+    IMFTopology* pTopology = nullptr;
+
+
+    if (hFindFile != INVALID_HANDLE_VALUE)
+    {
+      do
+      {
+        wcscpy(srcFileName, srcFileFolder);
+        wcscat(srcFileName, findData.cFileName);
+
+// wmaencoder        MediaFoundationSourceReader *reader = MediaFoundationSourceReader::CreateFromUrl(srcFileName);
+
+        hr = CreateMediaSource(srcFileName, &source);
+
+        // if an output folder is specified, use that
+
+        wchar_t outputFilename[MAX_PATH];
+
+        if (*parameters.OutputFolder)
+        {
+          wcscpy(outputFilename, parameters.OutputFolder);
+          wcscat(outputFilename, findData.cFileName);
+          PathRenameExtension(outputFilename, L".wma");
+        }
+        else
+        {
+          wcscpy(outputFilename, parameters.OutputFilename);
+        }
+
+        hr = CreateMediaSink(outputFilename, source, &pFileSinkActivate);
+
+        //Build the encoding topology.
+        hr = BuildPartialTopology(source, pFileSinkActivate, &pTopology);
+        hr = Encode(pTopology);
+
+        pTopology->Release();
+        pFileSinkActivate->Release();
+        source->Release();
+
+
+
+/* old shit
+IMFActivate *anotherActivationObject;
+        IMFASFContentInfo *asfContentInfo;
+
+        hr = MFCreateASFContentInfo(&asfContentInfo);
+        hr = MFCreateASFMediaSinkActivate(L"c:\\users\\bmalec\\please_work.wma", asfContentInfo, &anotherActivationObject);
+*/
+
+
+//        IMFMediaSink *mediaSink;
+
+
+// i love this old shit        hr = anotherActivationObject->ActivateObject(IID_PPV_ARGS(&mediaSink));
+
+
+        /* old, does-not-actually-work code
+        MediaFoundationSinkWriter *writer = MediaFoundationSinkWriter::CreateSinkWriter(outputFilename);
+
+        SetSinkWriterMetadata(writer, reader, &parameters);
+
+        writer->Transcode(reader, transform);
+        */
+      } while (FindNextFile(hFindFile, &findData));
+
+      FindClose(hFindFile);
+    }
+    else
+    {
+      // input file does not exit
+
+      throw std::invalid_argument("Input filename does not exist");
+    }
+
+    MFShutdown();
+    CoUninitialize();
+  }
+  catch (std::exception &ex)
+  {
+    printf("ERROR: %s\n", ex.what());
+  }
+
+  /* OLD LOGIC STARTS HERE
+
+
   CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
   HRESULT hr = MFStartup(MF_VERSION);
 
@@ -1349,6 +1529,7 @@ int main()
 
   MFShutdown();
   CoUninitialize();
+  */
 
     return 0;
 }
