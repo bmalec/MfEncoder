@@ -98,7 +98,7 @@ MediaSource* MediaSource::Open(const wchar_t *url)
   hr = pSourceResolver->CreateObjectFromURL(
     url,                       // URL of the source.
     MF_RESOLUTION_MEDIASOURCE,  // Create a source object.
-    NULL,                       // Optional property store.
+    nullptr,                       // Optional property store.
     &ObjectType,        // Receives the created object type. 
     &pSource            // Receives a pointer to the media source.
   );

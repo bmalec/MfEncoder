@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mfidl.h>
+#include "MediaSource.h"
 // #include <mfreadwrite.h>
 
 class MediaSink
@@ -25,7 +26,7 @@ protected:
   MediaSink(IMFActivate* mfActivate);
 
 public:
-  static MediaSink *Create(const wchar_t *url, IMFMediaSource *pSource);
+  static MediaSink *Create(const wchar_t *url, MediaSource* source);
   ~MediaSink();
 
   IMFActivate* GetActivationObject();

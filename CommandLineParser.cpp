@@ -64,13 +64,13 @@ void CommandLineParser::Parse(int argc, wchar_t* argv[], Parameters* parameters)
         break;
 
       case CommandLineOption::Bitrate:
-        temp = wcstol(currentToken, NULL, 10);
+        temp = wcstol(currentToken, nullptr, 10);
         parameters->Bitrate = (int)temp;
         pendingOption = CommandLineOption::None;
         break;
 
       case CommandLineOption::Quality:
-        temp = wcstol(currentToken, NULL, 10);
+        temp = wcstol(currentToken, nullptr, 10);
         parameters->Quality = (int)temp;
         pendingOption = CommandLineOption::None;
         break;

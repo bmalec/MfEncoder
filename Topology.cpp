@@ -43,17 +43,17 @@ static HRESULT PostEncodingUpdate(IMFTopology *pTopology)
 
   HRESULT hr = S_OK;
 
-  IMFCollection* pOutputColl = NULL;
-  IUnknown* pNodeUnk = NULL;
-  IMFMediaType* pType = NULL;
-  IMFTopologyNode* pNode = NULL;
-  IUnknown* pSinkUnk = NULL;
-  IMFStreamSink* pStreamSink = NULL;
-  IMFTopologyNode* pEncoderNode = NULL;
-  IUnknown* pEncoderUnk = NULL;
-  IMFTransform* pEncoder = NULL;
-  IPropertyStore* pStreamSinkProps = NULL;
-  IPropertyStore* pEncoderProps = NULL;
+  IMFCollection* pOutputColl = nullptr;
+  IUnknown* pNodeUnk = nullptr;
+  IMFMediaType* pType = nullptr;
+  IMFTopologyNode* pNode = nullptr;
+  IUnknown* pSinkUnk = nullptr;
+  IMFStreamSink* pStreamSink = nullptr;
+  IMFTopologyNode* pEncoderNode = nullptr;
+  IUnknown* pEncoderUnk = nullptr;
+  IMFTransform* pEncoder = nullptr;
+  IPropertyStore* pStreamSinkProps = nullptr;
+  IPropertyStore* pEncoderProps = nullptr;
 
   GUID guidMajorType = GUID_NULL;
 
@@ -114,7 +114,7 @@ static HRESULT PostEncodingUpdate(IMFTopology *pTopology)
       goto done;
     }
 
-    hr = pNode->GetInput(0, &pEncoderNode, NULL);
+    hr = pNode->GetInput(0, &pEncoderNode, nullptr);
     if (FAILED(hr))
     {
       goto done;
@@ -286,9 +286,9 @@ done:
 HRESULT Topology::Encode()
 {
 
-  IMFMediaSession *pSession = NULL;
-  IMFMediaEvent* pEvent = NULL;
-  IMFTopology* pFullTopology = NULL;
+  IMFMediaSession *pSession = nullptr;
+  IMFMediaEvent* pEvent = nullptr;
+  IMFTopology* pFullTopology = nullptr;
 
 
   MediaEventType meType = MEUnknown;  // Event type
@@ -299,7 +299,7 @@ HRESULT Topology::Encode()
   MF_TOPOSTATUS TopoStatus = MF_TOPOSTATUS_INVALID; // Used with MESessionTopologyStatus event.    
 
 
-  hr = MFCreateMediaSession(NULL, &pSession);
+  hr = MFCreateMediaSession(nullptr, &pSession);
   if (FAILED(hr))
   {
     goto done;
@@ -351,7 +351,7 @@ HRESULT Topology::Encode()
         PropVariantInit(&var);
         wprintf_s(L"Topology resolved and set on the media session.\n");
 
-        hr = pSession->Start(NULL, &var);
+        hr = pSession->Start(nullptr, &var);
         if (FAILED(hr))
         {
           goto done;
@@ -436,7 +436,7 @@ HRESULT Topology::AddOutputNode(
   DWORD dwId,                 // Identifier of the stream sink.
   IMFTopologyNode **ppNode)   // Receives the node pointer.
 {
-  IMFTopologyNode *pNode = NULL;
+  IMFTopologyNode *pNode = nullptr;
 
   // Create the node.
   HRESULT hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &pNode);
@@ -508,15 +508,15 @@ HRESULT Topology::AddTransformOutputNodes(
   }
   */
 
-  IMFTopologyNode* pEncNode = NULL;
-  IMFTopologyNode* pOutputNode = NULL;
-  IMFASFContentInfo* pContentInfo = NULL;
-  IMFASFProfile* pProfile = NULL;
-  IMFASFStreamConfig* pStream = NULL;
-  IMFMediaType* pMediaType = NULL;
-  IPropertyStore* pProps = NULL;
-  IMFActivate *pEncoderActivate = NULL;
-  IMFMediaSink *pSink = NULL;
+  IMFTopologyNode* pEncNode = nullptr;
+  IMFTopologyNode* pOutputNode = nullptr;
+  IMFASFContentInfo* pContentInfo = nullptr;
+  IMFASFProfile* pProfile = nullptr;
+  IMFASFStreamConfig* pStream = nullptr;
+  IMFMediaType* pMediaType = nullptr;
+  IPropertyStore* pProps = nullptr;
+  IMFActivate *pEncoderActivate = nullptr;
+  IMFMediaSink *pSink = nullptr;
 
   GUID guidMT = GUID_NULL;
   GUID guidMajor = GUID_NULL;
@@ -739,13 +739,13 @@ void Topology::BuildPartialTopograpy(MediaSource* source, MediaSink* sink)
 {
   HRESULT hr = S_OK;
 
-  IMFPresentationDescriptor* pPD = NULL;
-  IMFStreamDescriptor *pStreamDesc = NULL;
-  IMFMediaTypeHandler* pMediaTypeHandler = NULL;
-  IMFMediaType* pSrcType = NULL;
+  IMFPresentationDescriptor* pPD = nullptr;
+  IMFStreamDescriptor *pStreamDesc = nullptr;
+  IMFMediaTypeHandler* pMediaTypeHandler = nullptr;
+  IMFMediaType* pSrcType = nullptr;
 
-  IMFTopologyNode* pSrcNode = NULL;
-  IMFTopologyNode* pEncoderNode = NULL;
+  IMFTopologyNode* pSrcNode = nullptr;
+  IMFTopologyNode* pEncoderNode = nullptr;
 
 
   DWORD cElems = 0;

@@ -324,8 +324,8 @@ static HRESULT CreateAudioStream(IMFASFProfile* pProfile, WORD wStreamNumber)
     return MF_E_INVALIDSTREAMNUMBER;
   }
 
-  IMFMediaType* pAudioType = NULL;
-  IMFASFStreamConfig* pAudioStream = NULL;
+  IMFMediaType* pAudioType = nullptr;
+  IMFASFStreamConfig* pAudioStream = nullptr;
 
   //Create an output type from the encoder
   HRESULT hr = GetOutputTypeFromWMAEncoder(&pAudioType);
@@ -365,11 +365,11 @@ done:
 
 
 
-MediaSink *MediaSink::Create(const wchar_t *filename, IMFMediaSource *pSource)
+MediaSink *MediaSink::Create(const wchar_t *filename, MediaSource* source)
 {
   HRESULT hr;
-  IMFASFProfile *mfAsfProfile = NULL;
-  IMFPresentationDescriptor *mfPresentationDescriptor = NULL;
+  IMFASFProfile *mfAsfProfile = nullptr;
+  IMFPresentationDescriptor *mfPresentationDescriptor = nullptr;
   IMFStreamDescriptor *mfStreamDescriptor;
   IMFMediaTypeHandler *mfMediaTypeHandler;
   IMFMediaType *mfMediaType;
@@ -380,7 +380,7 @@ MediaSink *MediaSink::Create(const wchar_t *filename, IMFMediaSource *pSource)
 
 
   hr = MFCreateASFProfile(&mfAsfProfile);
-  hr = pSource->CreatePresentationDescriptor(&mfPresentationDescriptor);
+  mfPresentationDescriptor = source->GetPresentationDescriptor();
   hr = mfPresentationDescriptor->GetStreamDescriptorCount(&streamDescriptorCount);
   hr = mfPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &mfStreamDescriptor);
 
