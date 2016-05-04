@@ -20,7 +20,7 @@ private:
 
   HRESULT AddSourceNode(
     MediaSource* source,          // Media source.
-    IMFPresentationDescriptor *pPD,   // Presentation descriptor.
+//    IMFPresentationDescriptor *pPD,   // Presentation descriptor.
     IMFStreamDescriptor *pSD,         // Stream descriptor.
     IMFTopologyNode **ppNode);         // Receives the node pointer.
 

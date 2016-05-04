@@ -674,7 +674,7 @@ done:
 // Add a source node to a topology.
 HRESULT Topology::AddSourceNode(
   MediaSource* source,          // Media source.
-  IMFPresentationDescriptor *pPD,   // Presentation descriptor.
+//  IMFPresentationDescriptor *pPD,   // Presentation descriptor.
   IMFStreamDescriptor *pSD,         // Stream descriptor.
   IMFTopologyNode **ppNode)         // Receives the node pointer.
 {
@@ -694,7 +694,7 @@ HRESULT Topology::AddSourceNode(
     goto done;
   }
 
-  hr = pNode->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, pPD);
+  hr = pNode->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, source->GetPresentationDescriptor());
   if (FAILED(hr))
   {
     goto done;
@@ -780,7 +780,7 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
       continue;
     }
 
-    hr = AddSourceNode(source, pPD, pStreamDesc, &pSrcNode);
+    hr = AddSourceNode(source, pStreamDesc, &pSrcNode);
     if (FAILED(hr))
     {
       goto done;
