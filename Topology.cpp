@@ -295,7 +295,6 @@ HRESULT Topology::Encode()
   IMFMediaSession *pSession = NULL;
   IMFMediaEvent* pEvent = NULL;
   IMFTopology* pFullTopology = NULL;
-//  IUnknown* pTopoUnk = NULL;
 
 
   MediaEventType meType = MEUnknown;  // Event type
@@ -431,7 +430,6 @@ done:
   pEvent->Release();
   pSession->Release();
   pFullTopology->Release();
-//  pTopoUnk->Release();
   return hr;
 }
 
@@ -770,10 +768,8 @@ void Topology::BuildPartialTopograpy(MediaSource* source, MediaSink* sink)
   IMFMediaTypeHandler* pMediaTypeHandler = NULL;
   IMFMediaType* pSrcType = NULL;
 
-//  IMFTopology* pTopology = NULL;
   IMFTopologyNode* pSrcNode = NULL;
   IMFTopologyNode* pEncoderNode = NULL;
-//  IMFTopologyNode* pOutputNode = NULL;
 
 
   DWORD cElems = 0;
@@ -866,11 +862,6 @@ void Topology::BuildPartialTopograpy(MediaSource* source, MediaSink* sink)
     }
 
 
-//    pStreamDesc->Release();
-//    pMediaTypeHandler->Release();
-    //pSrcType->Release();
-    //pEncoderNode->Release();
-//    pOutputNode->Release();
     guidMajor = GUID_NULL;
   }
 
@@ -885,11 +876,4 @@ done:
   pMediaTypeHandler->Release();
   pSrcType->Release();
   pEncoderNode->Release();
-//  pOutputNode->Release();
-//  SafeRelease(&pTopology);
-
- // return hr;
-
-
-//  return nullptr;
 }
