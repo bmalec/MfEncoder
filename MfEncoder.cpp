@@ -12,19 +12,16 @@
 #include <mftransform.h>
 #include "CommandLineParser.h"
 #include "Parameters.h"
+#include "MediaSource.h"
+#include "MediaSink.h"
+#include "Topology.h"
+#include "Globals.h"
 
 
-const INT32 VIDEO_WINDOW_MSEC = 3000;
 
 
-// Encoding mode
-typedef enum ENCODING_MODE {
-  NONE = 0x00000000,
-  CBR = 0x00000001,
-  VBR = 0x00000002,
-};
 
-static ENCODING_MODE EncodingMode = VBR;
+
 
 
 template <class T> void SafeRelease(T **ppT)
@@ -37,27 +34,18 @@ template <class T> void SafeRelease(T **ppT)
 }
 
 
-
+/*
 HRESULT CreateMediaSource(PCWSTR sURL, IMFMediaSource **ppSource)
 {
   MF_OBJECT_TYPE ObjectType = MF_OBJECT_INVALID;
 
-  IMFSourceResolver* pSourceResolver = NULL;
-  IUnknown* pSource = NULL;
+  IMFSourceResolver* pSourceResolver = nullptr;
+  IUnknown* pSource = nullptr;
 
   // Create the source resolver.
   HRESULT hr = MFCreateSourceResolver(&pSourceResolver);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
 
   // Use the source resolver to create the media source.
-
-  // Note: For simplicity this sample uses the synchronous method to create 
-  // the media source. However, creating a media source can take a noticeable
-  // amount of time, especially for a network source. For a more responsive 
-  // UI, use the asynchronous BeginCreateObjectFromURL method.
 
   hr = pSourceResolver->CreateObjectFromURL(
     sURL,                       // URL of the source.
@@ -66,21 +54,17 @@ HRESULT CreateMediaSource(PCWSTR sURL, IMFMediaSource **ppSource)
     &ObjectType,        // Receives the created object type. 
     &pSource            // Receives a pointer to the media source.
     );
-  if (FAILED(hr))
-  {
-    goto done;
-  }
 
   // Get the IMFMediaSource interface from the media source.
   hr = pSource->QueryInterface(IID_PPV_ARGS(ppSource));
 
-done:
-  SafeRelease(&pSourceResolver);
-  SafeRelease(&pSource);
+  pSource->Release();
+  pSourceResolver->Release();
+
   return hr;
 }
-
-
+*/
+/*
 //-------------------------------------------------------------------
 //  SetEncodingProperties
 //  Create a media source from a URL.
@@ -208,7 +192,7 @@ done:
   PropVariantClear(&var);
   return hr;
 }
-
+*/
 
 
 void SetBooleanProperty(IPropertyStore *propertyStore, PROPERTYKEY key, bool value)
@@ -284,7 +268,7 @@ HRESULT GetOutputTypeFromWMAEncoder(IMFMediaType** ppAudioType)
 
   SetBooleanProperty(propertyStore, MFPKEY_VBRENABLED, true);
   SetBooleanProperty(propertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, true);
-  SetUint32Property(propertyStore, MFPKEY_DESIRED_VBRQUALITY,90);
+  SetUint32Property(propertyStore, MFPKEY_DESIRED_VBRQUALITY,50);
 
 // this fails with a not_implemented error  hr = propertyStore->Commit();
 
@@ -354,7 +338,7 @@ HRESULT GetOutputTypeFromWMAEncoder(IMFMediaType** ppAudioType)
   return hr;
 }
 
-
+/*
 //-------------------------------------------------------------------
 //  CreateAudioStream
 //  Create an audio stream and add it to the profile.
@@ -412,8 +396,8 @@ done:
   SafeRelease(&pAudioType);
   return hr;
 }
-
-
+*/
+/* old
 HRESULT CreateMediaSink(PCWSTR filename, IMFMediaSource *pSource, IMFActivate **ppFileSinkActivate)
 {
   HRESULT hr;
@@ -469,7 +453,7 @@ HRESULT CreateMediaSink(PCWSTR filename, IMFMediaSource *pSource, IMFActivate **
 
   return hr;
 }
-
+*/
 
 // Add a source node to a topology.
 HRESULT AddSourceNode(
@@ -1413,9 +1397,9 @@ int wmain(int argc, wchar_t *argv[])
 
     HANDLE hFindFile = FindFirstFile(parameters.InputFilename, &findData);
 
-    IMFMediaSource *source = nullptr;
-    IMFActivate *pFileSinkActivate = nullptr;
-    IMFTopology* pTopology = nullptr;
+//    IMFMediaSource *source = nullptr;
+//    IMFActivate *pFileSinkActivate = nullptr;
+    //IMFTopology* pTopology = nullptr;
 
 
     if (hFindFile != INVALID_HANDLE_VALUE)
@@ -1427,7 +1411,13 @@ int wmain(int argc, wchar_t *argv[])
 
 // wmaencoder        MediaFoundationSourceReader *reader = MediaFoundationSourceReader::CreateFromUrl(srcFileName);
 
-        hr = CreateMediaSource(srcFileName, &source);
+        MediaSource* mediaSource = MediaSource::Open(srcFileName);
+
+
+
+
+
+// from demo        hr = CreateMediaSource(srcFileName, &source);
 
         // if an output folder is specified, use that
 
@@ -1444,15 +1434,24 @@ int wmain(int argc, wchar_t *argv[])
           wcscpy(outputFilename, parameters.OutputFilename);
         }
 
-        hr = CreateMediaSink(outputFilename, source, &pFileSinkActivate);
+//        hr = CreateMediaSink(outputFilename, mediaSource->GetMFMediaSource(), &pFileSinkActivate);
+
+        MediaSink* mediaSink = MediaSink::Create(outputFilename, mediaSource->GetMFMediaSource());
 
         //Build the encoding topology.
-        hr = BuildPartialTopology(source, pFileSinkActivate, &pTopology);
-        hr = Encode(pTopology);
 
-        pTopology->Release();
-        pFileSinkActivate->Release();
-        source->Release();
+        Topology* topology = Topology::Create();
+        topology->BuildPartialTopograpy(mediaSource, mediaSink);
+//        hr = BuildPartialTopology(mediaSource->GetMFMediaSource(), mediaSink->GetActivationObject(), &pTopology);
+
+        topology->Encode();
+//        hr = Encode(pTopology);
+
+//        pTopology->Release();
+//        pFileSinkActivate->Release();
+
+        delete mediaSource;
+//        source->Release();
 
 
 
