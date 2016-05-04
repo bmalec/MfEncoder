@@ -14,6 +14,7 @@ class MediaSource
 
 private:
   IMFMediaSource* _mfMediaSource;
+  IMFPresentationDescriptor* _mfPresentationDescriptor;
   MetadataKeyValuePair *_metadata;
   int _metadataItemCount;
   void LoadMetadataFromSource();
@@ -25,7 +26,7 @@ public:
   static MediaSource *Open(const wchar_t *url);
   ~MediaSource();
 
-  IMFPresentationDescriptor* CreatePresentationDescriptor();
+  IMFPresentationDescriptor* GetPresentationDescriptor();
 
 //  IMFMediaType *GetCurrentMediaType();
   IMFMediaSource* GetMFMediaSource();

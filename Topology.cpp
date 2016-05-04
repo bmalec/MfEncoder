@@ -285,12 +285,6 @@ done:
 
 HRESULT Topology::Encode()
 {
-  /*
-  if (!pTopology)
-  {
-    return E_INVALIDARG;
-  }
-  */
 
   IMFMediaSession *pSession = NULL;
   IMFMediaEvent* pEvent = NULL;
@@ -438,7 +432,6 @@ done:
 
 // Add an output node to a topology.
 HRESULT Topology::AddOutputNode(
-//  IMFTopology *pTopology,     // Topology.
   IMFActivate *pActivate,     // Media sink activation object.
   DWORD dwId,                 // Identifier of the stream sink.
   IMFTopologyNode **ppNode)   // Receives the node pointer.
@@ -485,7 +478,6 @@ HRESULT Topology::AddOutputNode(
 
 done:
   pNode->Release();
-//  SafeRelease(&pNode);
   return hr;
 }
 
@@ -504,7 +496,6 @@ done:
 //-------------------------------------------------------------------
 
 HRESULT Topology::AddTransformOutputNodes(
-//  IMFTopology* pTopology,
   IMFActivate* pSinkActivate,
   IMFMediaType* pSourceType,
   IMFTopologyNode **ppNode    // Receives the node pointer.
@@ -596,8 +587,6 @@ HRESULT Topology::AddTransformOutputNodes(
     {
       pStream->Release();
       pMediaType->Release();
-//      SafeRelease(&pStream);
-//      SafeRelease(&pMediaType);
       guidMT = GUID_NULL;
 
       continue;
@@ -677,18 +666,6 @@ done:
   pContentInfo->Release();
   pSink->Release();
 
-
-  /*
-  SafeRelease(&pEncNode);
-  SafeRelease(&pOutputNode);
-  SafeRelease(&pEncoderActivate);
-  SafeRelease(&pMediaType);
-  SafeRelease(&pProps);
-  SafeRelease(&pStream);
-  SafeRelease(&pProfile);
-  SafeRelease(&pContentInfo);
-  SafeRelease(&pSink);
-  */
   return hr;
 }
 
@@ -696,7 +673,6 @@ done:
 
 // Add a source node to a topology.
 HRESULT Topology::AddSourceNode(
-//  IMFTopology *pTopology,           // Topology.
   IMFMediaSource *pSource,          // Media source.
   IMFPresentationDescriptor *pPD,   // Presentation descriptor.
   IMFStreamDescriptor *pSD,         // Stream descriptor.
@@ -779,24 +755,7 @@ void Topology::BuildPartialTopograpy(MediaSource* source, MediaSink* sink)
   BOOL fSelected = FALSE;
 
 
-  //Create the topology that represents the encoding pipeline
-  /*
-  hr = MFCreateTopology(&pTopology);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-  */
-
-  pPD = source->CreatePresentationDescriptor();
-
-/* old
-  hr = pSource->CreatePresentationDescriptor(&pPD);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-*/
+  pPD = source->GetPresentationDescriptor();
 
   hr = pPD->GetStreamDescriptorCount(&dwSrcStream);
   if (FAILED(hr))

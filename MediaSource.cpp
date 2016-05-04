@@ -3,28 +3,24 @@
 #include <propvarutil.h>
 #include "MediaSource.h"
 
-IMFPresentationDescriptor* MediaSource::CreatePresentationDescriptor()
+IMFPresentationDescriptor* MediaSource::GetPresentationDescriptor()
 {
-  IMFPresentationDescriptor* result;
-
-  _mfMediaSource->CreatePresentationDescriptor(&result);
-
-  return result;
+  return _mfPresentationDescriptor;
 }
 
 
 void MediaSource::LoadMetadataFromSource()
 {
-  IMFPresentationDescriptor* mfPresentationDescriptor;
+//  IMFPresentationDescriptor* mfPresentationDescriptor;
   IMFMetadataProvider* mfMetadataProvider;
   IMFMetadata* mfMetadata;
 
-  HRESULT hr = _mfMediaSource->CreatePresentationDescriptor(&mfPresentationDescriptor);
+//  HRESULT hr = _mfMediaSource->CreatePresentationDescriptor(&mfPresentationDescriptor);
 
-  hr = MFGetService(_mfMediaSource, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&mfMetadataProvider));
+  HRESULT hr = MFGetService(_mfMediaSource, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&mfMetadataProvider));
 
 
-  hr = mfMetadataProvider->GetMFMetadata(mfPresentationDescriptor, 0, 0, &mfMetadata);
+  hr = mfMetadataProvider->GetMFMetadata(_mfPresentationDescriptor, 0, 0, &mfMetadata);
 
   PROPVARIANT metadataKeys;
 
@@ -74,6 +70,7 @@ void MediaSource::LoadMetadataFromSource()
 MediaSource::MediaSource(IMFMediaSource *mfMediaSource)
 {
   _mfMediaSource = mfMediaSource;
+  _mfMediaSource->CreatePresentationDescriptor(&_mfPresentationDescriptor);
 
   LoadMetadataFromSource();
 }

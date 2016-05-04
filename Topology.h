@@ -48,10 +48,5 @@ public:
 
   ~Topology();
 
-//  IMFActivate* GetActivationObject();
-
-  //  IMFMediaType *GetCurrentMediaType();
-  //  IMFMediaSource* GetMFMediaSource();
-  //  wchar_t *GetMetadataValue(wchar_t *metadataKey);
 };
 
