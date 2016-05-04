@@ -29,6 +29,8 @@ public:
   static MediaSink *Create(const wchar_t *url, MediaSource* source);
   ~MediaSink();
 
+//  IMFMediaSink* Activate();
+
   IMFActivate* GetActivationObject();
 
   //  IMFMediaType *GetCurrentMediaType();

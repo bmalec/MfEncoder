@@ -71,6 +71,7 @@ MediaSource::MediaSource(IMFMediaSource *mfMediaSource)
 {
   _mfMediaSource = mfMediaSource;
   _mfMediaSource->CreatePresentationDescriptor(&_mfPresentationDescriptor);
+  _mfPresentationDescriptor->GetStreamDescriptorCount(&_streamDescriptorCount);
 
   LoadMetadataFromSource();
 }
@@ -79,6 +80,46 @@ MediaSource::~MediaSource()
 {
   if (_mfMediaSource != nullptr)
     _mfMediaSource->Release();
+}
+
+
+DWORD MediaSource::GetStreamDescriptorCount()
+{
+  return _streamDescriptorCount;
+}
+
+GUID MediaSource::GetMajorType()
+{
+  IMFStreamDescriptor *mfStreamDescriptor = nullptr;
+  IMFMediaTypeHandler *mfMediaTypeHandler = nullptr;
+  IMFMediaType *mfMediaType = nullptr; 
+  GUID majorType = GUID_NULL;
+  HRESULT hr;
+  BOOL selected;
+
+//  streamDescriptorCount = source->GetStreamDescriptorCount();
+  //hr = mfPresentationDescriptor->GetStreamDescriptorCount(&streamDescriptorCount);
+
+  do
+  {
+    hr = _mfPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &mfStreamDescriptor);
+    hr = mfStreamDescriptor->GetMediaTypeHandler(&mfMediaTypeHandler);
+    hr = mfMediaTypeHandler->GetMediaTypeByIndex(0, &mfMediaType);
+    hr = mfMediaType->GetMajorType(&majorType);
+  } while (0);
+
+//  hr = _mfPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &mfStreamDescriptor);
+
+//  hr = mfStreamDescriptor->GetMediaTypeHandler(&mfMediaTypeHandler);
+//  hr = mfMediaTypeHandler->GetMediaTypeByIndex(0, &mfMediaType);
+
+//  hr = mfMediaType->GetMajorType(&majorType);
+
+  if (mfMediaType) mfMediaType->Release();
+  if (mfMediaTypeHandler) mfMediaTypeHandler->Release();
+  if (mfStreamDescriptor) mfStreamDescriptor->Release();
+
+  return majorType;
 }
 
 
@@ -115,4 +156,15 @@ MediaSource* MediaSource::Open(const wchar_t *url)
 IMFMediaSource* MediaSource::GetMFMediaSource()
 {
   return _mfMediaSource;
+}
+
+
+StreamDescriptor* MediaSource::GetStreamDescriptorByIndex(DWORD index)
+{
+  IMFStreamDescriptor* mfStreamDescriptor = nullptr;
+  BOOL isSelected = FALSE;
+
+  HRESULT hr = _mfPresentationDescriptor->GetStreamDescriptorByIndex(index, &isSelected, &mfStreamDescriptor);
+
+  return new StreamDescriptor(mfStreamDescriptor, isSelected);
 }

@@ -431,10 +431,7 @@ done:
 
 
 // Add an output node to a topology.
-HRESULT Topology::AddOutputNode(
-  IMFActivate *pActivate,     // Media sink activation object.
-  DWORD dwId,                 // Identifier of the stream sink.
-  IMFTopologyNode **ppNode)   // Receives the node pointer.
+IMFTopologyNode* Topology::AddOutputNode(IMFActivate *mediaSinkActivate,  DWORD dwId)
 {
   IMFTopologyNode *pNode = nullptr;
 
@@ -446,7 +443,7 @@ HRESULT Topology::AddOutputNode(
   }
 
   // Set the object pointer.
-  hr = pNode->SetObject(pActivate);
+  hr = pNode->SetObject(mediaSinkActivate);
   if (FAILED(hr))
   {
     goto done;
@@ -473,12 +470,12 @@ HRESULT Topology::AddOutputNode(
   }
 
   // Return the pointer to the caller.
-  *ppNode = pNode;
-  (*ppNode)->AddRef();
+//  *ppNode = pNode;
+//  (*ppNode)->AddRef();
 
 done:
-  pNode->Release();
-  return hr;
+//  pNode->Release();
+  return pNode;
 }
 
 
@@ -496,8 +493,10 @@ done:
 //-------------------------------------------------------------------
 
 HRESULT Topology::AddTransformOutputNodes(
+//  MediaSink* mediaSink,
   IMFActivate* pSinkActivate,
-  IMFMediaType* pSourceType,
+  GUID guidMajor,
+//  IMFMediaType* pSourceType,
   IMFTopologyNode **ppNode    // Receives the node pointer.
 )
 {
@@ -519,18 +518,18 @@ HRESULT Topology::AddTransformOutputNodes(
   IMFMediaSink *pSink = nullptr;
 
   GUID guidMT = GUID_NULL;
-  GUID guidMajor = GUID_NULL;
+//  GUID guidMajor = GUID_NULL;
 
   DWORD cStreams = 0;
   WORD wStreamNumber = 0;
 
   HRESULT hr = S_OK;
 
-  hr = pSourceType->GetMajorType(&guidMajor);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
+//  hr = pSourceType->GetMajorType(&guidMajor);
+//  if (FAILED(hr))
+//  {
+//    goto done;
+//  }
 
   // Create the node.
   hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &pEncNode);
@@ -540,11 +539,15 @@ HRESULT Topology::AddTransformOutputNodes(
   }
 
   //Activate the sink
+
+//  pSink = mediaSink->Activate();
+
   hr = pSinkActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&pSink);
   if (FAILED(hr))
   {
     goto done;
   }
+
   //find the media type in the sink
   //Get content info from the sink
   hr = pSink->QueryInterface(__uuidof(IMFASFContentInfo), (void**)&pContentInfo);
@@ -637,11 +640,11 @@ HRESULT Topology::AddTransformOutputNodes(
   }
 
   //Add the output node to this node.
-  hr = AddOutputNode(pSinkActivate, wStreamNumber, &pOutputNode);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
+  pOutputNode = AddOutputNode(pSinkActivate, wStreamNumber);
+//  if (FAILED(hr))
+//  {
+//    goto done;
+//  }
 
   //now we have the output node, connect it to the transform node
   hr = pEncNode->ConnectOutput(0, pOutputNode, 0);
@@ -741,7 +744,7 @@ Topology* Topology::BuildPartialTopograpy(MediaSource* source, MediaSink* sink)
 void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
 {
   HRESULT hr = S_OK;
-
+  
   IMFPresentationDescriptor* pPD = nullptr;
   IMFStreamDescriptor *pStreamDesc = nullptr;
   IMFMediaTypeHandler* pMediaTypeHandler = nullptr;
@@ -753,18 +756,14 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
 
   DWORD cElems = 0;
   DWORD dwSrcStream = 0;
-  DWORD StreamID = 0;
+//  DWORD StreamID = 0;
   GUID guidMajor = GUID_NULL;
   BOOL fSelected = FALSE;
 
 
   pPD = source->GetPresentationDescriptor();
 
-  hr = pPD->GetStreamDescriptorCount(&dwSrcStream);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
+  dwSrcStream = source->GetStreamDescriptorCount();
 
   for (DWORD iStream = 0; iStream < dwSrcStream; iStream++)
   {
@@ -791,12 +790,13 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
     {
       goto done;
     }
-
+/* why??
     hr = pStreamDesc->GetStreamIdentifier(&StreamID);
     if (FAILED(hr))
     {
       goto done;
     }
+*/
 
     hr = pMediaTypeHandler->GetMediaTypeByIndex(0, &pSrcType);
     if (FAILED(hr))
@@ -810,7 +810,7 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
       goto done;
     }
 
-    hr = AddTransformOutputNodes(sink->GetActivationObject(), pSrcType, &pEncoderNode);
+    hr = AddTransformOutputNodes(sink->GetActivationObject(), guidMajor, &pEncoderNode);
     if (FAILED(hr))
     {
       goto done;

@@ -301,7 +301,16 @@ static HRESULT GetOutputTypeFromWMAEncoder(IMFMediaType** ppAudioType)
   //CoTaskMemFree(pMFTCLSIDs);
   return hr;
 }
+/*
+IMFMediaSink* MediaSink::Activate()
+{
+  IMFMediaSink* result = nullptr;
+  
+  HRESULT hr = _mfActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&result);
 
+  return result;
+}
+*/
 
 
 
@@ -365,29 +374,14 @@ done:
 
 
 
-MediaSink *MediaSink::Create(const wchar_t *filename, MediaSource* source)
+MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source)
 {
   HRESULT hr;
   IMFASFProfile *mfAsfProfile = nullptr;
-  IMFPresentationDescriptor *mfPresentationDescriptor = nullptr;
-  IMFStreamDescriptor *mfStreamDescriptor;
-  IMFMediaTypeHandler *mfMediaTypeHandler;
-  IMFMediaType *mfMediaType;
-  DWORD streamDescriptorCount;
-  BOOL selected;
-  GUID majorType;
   IMFActivate *mfActivate;
 
 
   hr = MFCreateASFProfile(&mfAsfProfile);
-  mfPresentationDescriptor = source->GetPresentationDescriptor();
-  hr = mfPresentationDescriptor->GetStreamDescriptorCount(&streamDescriptorCount);
-  hr = mfPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &mfStreamDescriptor);
-
-  hr = mfStreamDescriptor->GetMediaTypeHandler(&mfMediaTypeHandler);
-  hr = mfMediaTypeHandler->GetMediaTypeByIndex(0, &mfMediaType);
-
-  hr = mfMediaType->GetMajorType(&majorType);
 
   hr = CreateAudioStream(mfAsfProfile, 1);
 
@@ -401,7 +395,7 @@ MediaSink *MediaSink::Create(const wchar_t *filename, MediaSource* source)
 
 
   //Set the stream-level encoding properties
-  hr = SetEncodingProperties(majorType, contentInfoProperties);
+  hr = SetEncodingProperties(source->GetMajorType(), contentInfoProperties);
 
   hr = mfAsfContentInfo->GetEncodingConfigurationPropertyStore(0, &contentInfoProperties);
 

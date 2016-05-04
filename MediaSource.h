@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mfidl.h>
+#include "StreamDescriptor.h"
 // #include <mfreadwrite.h>
 
 class MediaSource
@@ -17,6 +18,8 @@ private:
   IMFPresentationDescriptor* _mfPresentationDescriptor;
   MetadataKeyValuePair *_metadata;
   int _metadataItemCount;
+  DWORD _streamDescriptorCount;
+
   void LoadMetadataFromSource();
 
 protected:
@@ -27,6 +30,9 @@ public:
   ~MediaSource();
 
   IMFPresentationDescriptor* GetPresentationDescriptor();
+  DWORD GetStreamDescriptorCount();
+  GUID GetMajorType();
+  StreamDescriptor* GetStreamDescriptorByIndex(DWORD index);
 
 //  IMFMediaType *GetCurrentMediaType();
   IMFMediaSource* GetMFMediaSource();

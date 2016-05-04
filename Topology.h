@@ -25,16 +25,16 @@ private:
     IMFTopologyNode **ppNode);         // Receives the node pointer.
 
   HRESULT Topology::AddTransformOutputNodes(
+//    MediaSink* mediaSink,
     IMFActivate* pSinkActivate,
-    IMFMediaType* pSourceType,
+//    IMFMediaType* pSourceType,
+    GUID guidMajor,
     IMFTopologyNode **ppNode    // Receives the node pointer.
   );
 
 
-  HRESULT AddOutputNode(
-    IMFActivate *pActivate,     // Media sink activation object.
-    DWORD dwId,                 // Identifier of the stream sink.
-    IMFTopologyNode **ppNode);   // Receives the node pointer.
+  IMFTopologyNode* AddOutputNode(IMFActivate *mediaSinkActivate, DWORD dwId);
+
 
   void _buildPartialTopograpy(MediaSource* source, MediaSink* sink);
 
