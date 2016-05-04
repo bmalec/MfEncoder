@@ -36,14 +36,16 @@ private:
     DWORD dwId,                 // Identifier of the stream sink.
     IMFTopologyNode **ppNode);   // Receives the node pointer.
 
+  void _buildPartialTopograpy(MediaSource* source, MediaSink* sink);
+
 
 
 protected:
   Topology(IMFTopology* mfTopology);
 
 public:
-  static Topology* Create();
-  void BuildPartialTopograpy(MediaSource* source, MediaSink* sink);  // TODO this should not be separate from Create()
+//  static Topology* Create();
+  static Topology* BuildPartialTopograpy(MediaSource* source, MediaSink* sink);  // TODO this should not be separate from Create()
   HRESULT Encode();
 
   ~Topology();

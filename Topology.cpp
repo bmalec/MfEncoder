@@ -723,19 +723,24 @@ done:
   return hr;
 }
 
-Topology* Topology::Create()
+Topology* Topology::BuildPartialTopograpy(MediaSource* source, MediaSink* sink)
 {
   IMFTopology* mfTopology = nullptr;
   //Create the topology that represents the encoding pipeline
   HRESULT hr = MFCreateTopology(&mfTopology);
 
-  return new Topology(mfTopology);
+  Topology* topology = new Topology(mfTopology);
+  topology->_buildPartialTopograpy(source, sink);
+
+  return topology;
+
+//  return new Topology(mfTopology);
 }
 
 
 
 
-void Topology::BuildPartialTopograpy(MediaSource* source, MediaSink* sink)
+void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
 {
   HRESULT hr = S_OK;
 
