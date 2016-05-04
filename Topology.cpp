@@ -745,72 +745,32 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
 {
   HRESULT hr = S_OK;
   
-  IMFPresentationDescriptor* pPD = nullptr;
-  IMFStreamDescriptor *pStreamDesc = nullptr;
-  IMFMediaTypeHandler* pMediaTypeHandler = nullptr;
-  IMFMediaType* pSrcType = nullptr;
-
   IMFTopologyNode* pSrcNode = nullptr;
   IMFTopologyNode* pEncoderNode = nullptr;
 
 
   DWORD cElems = 0;
   DWORD dwSrcStream = 0;
-//  DWORD StreamID = 0;
-  GUID guidMajor = GUID_NULL;
   BOOL fSelected = FALSE;
-
-
-  pPD = source->GetPresentationDescriptor();
 
   dwSrcStream = source->GetStreamDescriptorCount();
 
   for (DWORD iStream = 0; iStream < dwSrcStream; iStream++)
   {
-    hr = pPD->GetStreamDescriptorByIndex(
-      iStream, &fSelected, &pStreamDesc);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
+    StreamDescriptor* streamDescriptor = source->GetStreamDescriptorByIndex(iStream);
 
-    if (!fSelected)
+    if (!streamDescriptor->GetIsSelected())
     {
       continue;
     }
 
-    hr = AddSourceNode(source, pStreamDesc, &pSrcNode);
+    hr = AddSourceNode(source, streamDescriptor->GetMfStreamDescriptor(), &pSrcNode);
     if (FAILED(hr))
     {
       goto done;
     }
 
-    hr = pStreamDesc->GetMediaTypeHandler(&pMediaTypeHandler);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-/* why??
-    hr = pStreamDesc->GetStreamIdentifier(&StreamID);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-*/
-
-    hr = pMediaTypeHandler->GetMediaTypeByIndex(0, &pSrcType);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pSrcType->GetMajorType(&guidMajor);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = AddTransformOutputNodes(sink->GetActivationObject(), guidMajor, &pEncoderNode);
+    hr = AddTransformOutputNodes(sink->GetActivationObject(), streamDescriptor->GetMajorType(), &pEncoderNode);
     if (FAILED(hr))
     {
       goto done;
@@ -822,9 +782,6 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
     {
       goto done;
     }
-
-
-    guidMajor = GUID_NULL;
   }
 
 //  *ppTopology = pTopology;
@@ -834,8 +791,5 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
   wprintf_s(L"Partial Topology Built.\n");
 
 done:
-  pStreamDesc->Release();
-  pMediaTypeHandler->Release();
-  pSrcType->Release();
   pEncoderNode->Release();
 }

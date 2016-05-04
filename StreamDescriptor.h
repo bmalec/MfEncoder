@@ -32,6 +32,11 @@ public:
   StreamDescriptor(IMFStreamDescriptor *mfStreamDescriptor, BOOL isSelected);
   ~StreamDescriptor();
 
+  BOOL GetIsSelected();
+  GUID GetMajorType();
+
+  IMFStreamDescriptor* GetMfStreamDescriptor();
+
   //  IMFMediaSink* Activate();
 
 //  IMFActivate* GetActivationObject();

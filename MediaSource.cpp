@@ -90,23 +90,25 @@ DWORD MediaSource::GetStreamDescriptorCount()
 
 GUID MediaSource::GetMajorType()
 {
-  IMFStreamDescriptor *mfStreamDescriptor = nullptr;
-  IMFMediaTypeHandler *mfMediaTypeHandler = nullptr;
-  IMFMediaType *mfMediaType = nullptr; 
+//  IMFStreamDescriptor *mfStreamDescriptor = nullptr;
+//  IMFMediaTypeHandler *mfMediaTypeHandler = nullptr;
+//  IMFMediaType *mfMediaType = nullptr; 
   GUID majorType = GUID_NULL;
-  HRESULT hr;
-  BOOL selected;
+//  HRESULT hr;
+//  BOOL selected;
 
 //  streamDescriptorCount = source->GetStreamDescriptorCount();
   //hr = mfPresentationDescriptor->GetStreamDescriptorCount(&streamDescriptorCount);
 
-  do
-  {
-    hr = _mfPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &mfStreamDescriptor);
-    hr = mfStreamDescriptor->GetMediaTypeHandler(&mfMediaTypeHandler);
-    hr = mfMediaTypeHandler->GetMediaTypeByIndex(0, &mfMediaType);
-    hr = mfMediaType->GetMajorType(&majorType);
-  } while (0);
+  //do
+  //{
+    StreamDescriptor* streamDescriptor = GetStreamDescriptorByIndex(0);
+    majorType = streamDescriptor->GetMajorType();
+//    hr = _mfPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &mfStreamDescriptor);
+//    hr = mfStreamDescriptor->GetMediaTypeHandler(&mfMediaTypeHandler);
+//   hr = mfMediaTypeHandler->GetMediaTypeByIndex(0, &mfMediaType);
+//    hr = mfMediaType->GetMajorType(&majorType);
+  //} while (0);
 
 //  hr = _mfPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &mfStreamDescriptor);
 
@@ -115,9 +117,11 @@ GUID MediaSource::GetMajorType()
 
 //  hr = mfMediaType->GetMajorType(&majorType);
 
-  if (mfMediaType) mfMediaType->Release();
-  if (mfMediaTypeHandler) mfMediaTypeHandler->Release();
-  if (mfStreamDescriptor) mfStreamDescriptor->Release();
+//  if (mfMediaType) mfMediaType->Release();
+//  if (mfMediaTypeHandler) mfMediaTypeHandler->Release();
+//  if (mfStreamDescriptor) mfStreamDescriptor->Release();
+
+    delete streamDescriptor;
 
   return majorType;
 }
