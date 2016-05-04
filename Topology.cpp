@@ -11,6 +11,12 @@ Topology::Topology(IMFTopology* mfTopology)
 }
 
 
+Topology::~Topology()
+{
+  _mfTopology->Release();
+}
+
+
 
 //-------------------------------------------------------------------
 //  PostEncodingUpdate
