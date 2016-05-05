@@ -26,7 +26,7 @@ protected:
   MediaSink(IMFActivate* mfActivate);
 
 public:
-  static MediaSink *Create(const wchar_t *url, MediaSource* source);
+  static MediaSink *Create(const wchar_t *url, MediaSource* source, Parameters* params);
   ~MediaSink();
 
 //  IMFMediaSink* Activate();

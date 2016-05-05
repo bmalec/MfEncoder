@@ -141,7 +141,7 @@ int wmain(int argc, wchar_t *argv[])
           wcscpy(outputFilename, parameters.OutputFilename);
         }
 
-        MediaSink* mediaSink = MediaSink::Create(outputFilename, mediaSource);
+        MediaSink* mediaSink = MediaSink::Create(outputFilename, mediaSource, &parameters);
 
         //Build the encoding topology.
 
