@@ -7,4 +7,4 @@ typedef enum ENCODING_MODE {
   VBR = 0x00000002,
 };
 
-extern ENCODING_MODE EncodingMode;
+// extern ENCODING_MODE EncodingMode;

@@ -9,6 +9,7 @@ Topology::Topology(IMFTopology* mfTopology)
 {
   _mfTopology = mfTopology;
 }
+  
 
 
 Topology::~Topology()
@@ -283,7 +284,7 @@ done:
 //  pTopology:  A pointer to the encoding topology.
 //-------------------------------------------------------------------
 
-HRESULT Topology::Encode()
+HRESULT Topology::Encode(Parameters* parameters)
 {
 
   IMFMediaSession *pSession = nullptr;
@@ -389,7 +390,7 @@ HRESULT Topology::Encode()
 
     case MEEndOfPresentation:
     {
-      if (EncodingMode == VBR)
+      if (parameters->Quality > 0)
       {
         hr = pSession->GetFullTopology(MFSESSION_GETFULLTOPOLOGY_CURRENT, 0, &pFullTopology);
         if (FAILED(hr))

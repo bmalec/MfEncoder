@@ -146,7 +146,7 @@ int wmain(int argc, wchar_t *argv[])
         //Build the encoding topology.
 
         Topology* topology = Topology::BuildPartialTopograpy(mediaSource, mediaSink);
-        topology->Encode();
+        topology->Encode(&parameters);
 
         delete topology;
         delete mediaSink;

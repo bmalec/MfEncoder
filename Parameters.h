@@ -27,6 +27,9 @@ public:
     TrackNumber = nullptr;
     Genre = nullptr;
 
+    Bitrate = -1;
+    Quality = 70;
+
     *InputFilename = '\0';
     *OutputFilename = '\0';
     *OutputFolder = '\0';

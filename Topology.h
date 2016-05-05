@@ -2,6 +2,7 @@
 
 #include "MediaSource.h"
 #include "MediaSink.h"
+#include "Parameters.h"
 
 
 class Topology
@@ -20,14 +21,11 @@ private:
 
   HRESULT AddSourceNode(
     MediaSource* source,          // Media source.
-//    IMFPresentationDescriptor *pPD,   // Presentation descriptor.
     IMFStreamDescriptor *pSD,         // Stream descriptor.
     IMFTopologyNode **ppNode);         // Receives the node pointer.
 
   HRESULT Topology::AddTransformOutputNodes(
-//    MediaSink* mediaSink,
     IMFActivate* pSinkActivate,
-//    IMFMediaType* pSourceType,
     GUID guidMajor,
     IMFTopologyNode **ppNode    // Receives the node pointer.
   );
@@ -44,9 +42,8 @@ protected:
   Topology(IMFTopology* mfTopology);
 
 public:
-//  static Topology* Create();
   static Topology* BuildPartialTopograpy(MediaSource* source, MediaSink* sink);  // TODO this should not be separate from Create()
-  HRESULT Encode();
+  HRESULT Encode(Parameters* parameters);
 
   ~Topology();
 

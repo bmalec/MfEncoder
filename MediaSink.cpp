@@ -80,7 +80,7 @@ static IMFMediaType* GetOutputTypeFromWMAEncoder(Parameters* params)
 
   SetBooleanProperty(propertyStore, MFPKEY_VBRENABLED, true);
   SetBooleanProperty(propertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, true);
-  SetUint32Property(propertyStore, MFPKEY_DESIRED_VBRQUALITY, 50);
+  SetUint32Property(propertyStore, MFPKEY_DESIRED_VBRQUALITY, params->Quality);
 
   // this fails with a not_implemented error  hr = propertyStore->Commit();
 
@@ -190,18 +190,114 @@ static HRESULT SetEncodingProperties(const GUID guidMT, Parameters* params, IPro
     return E_INVALIDARG;
   }
 
-  if (EncodingMode == NONE)
-  {
-    return MF_E_NOT_INITIALIZED;
-  }
-
   HRESULT hr = S_OK;
 
   PROPVARIANT var;
 
+  if (params->Quality > 0)
+  {
+    // Quality has been specified, so use quality-based VBR
+
+    hr = InitPropVariantFromBoolean(TRUE, &var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    hr = pProps->SetValue(MFPKEY_VBRENABLED, var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    // Number of encoding passes is 1.
+
+    hr = InitPropVariantFromInt32(1, &var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    hr = pProps->SetValue(MFPKEY_PASSESUSED, var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    // Set the quality level.
+
+    if (guidMT == MFMediaType_Audio)
+    {
+      hr = InitPropVariantFromUInt32(params->Quality, &var);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+
+      hr = pProps->SetValue(MFPKEY_DESIRED_VBRQUALITY, var);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+    }
+    else if (guidMT == MFMediaType_Video)
+    {
+      hr = InitPropVariantFromUInt32(95, &var);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+
+      hr = pProps->SetValue(MFPKEY_VBRQUALITY, var);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+    }
+
+
+  }
+  else
+  {
+    // quality not specified, use constant bitrate
+    hr = InitPropVariantFromBoolean(FALSE, &var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    hr = pProps->SetValue(MFPKEY_VBRENABLED, var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    // Set the video buffer window.
+    if (guidMT == MFMediaType_Video)
+    {
+      hr = InitPropVariantFromInt32(VIDEO_WINDOW_MSEC, &var);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+
+      hr = pProps->SetValue(MFPKEY_VIDEOWINDOW, var);
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+    }
+
+
+  }
+
+
+  /*
+
   switch (EncodingMode)
   {
   case CBR:
+
     // Set VBR to false.
     hr = InitPropVariantFromBoolean(FALSE, &var);
     if (FAILED(hr))
@@ -264,7 +360,7 @@ static HRESULT SetEncodingProperties(const GUID guidMT, Parameters* params, IPro
 
     if (guidMT == MFMediaType_Audio)
     {
-      hr = InitPropVariantFromUInt32(50, &var);
+      hr = InitPropVariantFromUInt32(params->Quality, &var);
       if (FAILED(hr))
       {
         goto done;
@@ -296,6 +392,8 @@ static HRESULT SetEncodingProperties(const GUID guidMT, Parameters* params, IPro
     hr = E_UNEXPECTED;
     break;
   }
+
+  */
 
 done:
   PropVariantClear(&var);

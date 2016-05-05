@@ -2,6 +2,7 @@
 
 #include <mfidl.h>
 #include "MediaSource.h"
+#include "Parameters.h"
 // #include <mfreadwrite.h>
 
 class MediaSink
