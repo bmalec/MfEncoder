@@ -7,15 +7,6 @@
 
 class Topology
 {
-  /*
-  struct MetadataKeyValuePair
-  {
-  wchar_t Key[40];
-  wchar_t *Value;
-  };
-  */
-
-
 private:
   IMFTopology* _mfTopology;
 

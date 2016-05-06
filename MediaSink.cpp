@@ -4,11 +4,10 @@
 #include <Mferror.h>
 #include <wmcodecdsp.h>
 #include <propvarutil.h>
-#include "Globals.h"
 #include "Parameters.h"
 #include "MediaSink.h"
 
-const INT32 VIDEO_WINDOW_MSEC = 3000;
+// const INT32 VIDEO_WINDOW_MSEC = 3000;
 
 
 static void SetBooleanProperty(IPropertyStore *propertyStore, PROPERTYKEY key, bool value)
@@ -117,7 +116,6 @@ static IMFMediaType* GetOutputTypeFromWMAEncoder(Parameters* params)
     if ((channelCount == 2) && (samplesPerSecond == 44100) && (bitsPerSample == 16))
     {
       result = mediaType;
-      //      (*ppAudioType)->AddRef();
       break;
     }
     else
@@ -142,11 +140,6 @@ static IMFMediaType* GetOutputTypeFromWMAEncoder(Parameters* params)
 
   CoTaskMemFree(transformActivationObjs);
 
-  //done:
-  //  SafeRelease(&pProps);
-  //  SafeRelease(&pType);
-  //  SafeRelease(&pMFT);
-  //CoTaskMemFree(pMFTCLSIDs);
   return result;
 }
 
@@ -350,20 +343,6 @@ static HRESULT SetEncodingProperties(const GUID guidMT, Parameters* params, IPro
         goto done;
       }
     }
-    else if (guidMT == MFMediaType_Video)
-    {
-      hr = InitPropVariantFromUInt32(95, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      hr = pProps->SetValue(MFPKEY_VBRQUALITY, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-    }
 
 
   }
@@ -382,128 +361,8 @@ static HRESULT SetEncodingProperties(const GUID guidMT, Parameters* params, IPro
       goto done;
     }
 
-    // Set the video buffer window.
-    if (guidMT == MFMediaType_Video)
-    {
-      hr = InitPropVariantFromInt32(VIDEO_WINDOW_MSEC, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      hr = pProps->SetValue(MFPKEY_VIDEOWINDOW, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-    }
-
-
   }
-
-
-  /*
-
-  switch (EncodingMode)
-  {
-  case CBR:
-
-    // Set VBR to false.
-    hr = InitPropVariantFromBoolean(FALSE, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pProps->SetValue(MFPKEY_VBRENABLED, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    // Set the video buffer window.
-    if (guidMT == MFMediaType_Video)
-    {
-      hr = InitPropVariantFromInt32(VIDEO_WINDOW_MSEC, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      hr = pProps->SetValue(MFPKEY_VIDEOWINDOW, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-    }
-    break;
-
-  case VBR:
-    //Set VBR to true.
-    hr = InitPropVariantFromBoolean(TRUE, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pProps->SetValue(MFPKEY_VBRENABLED, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    // Number of encoding passes is 1.
-
-    hr = InitPropVariantFromInt32(1, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pProps->SetValue(MFPKEY_PASSESUSED, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    // Set the quality level.
-
-    if (guidMT == MFMediaType_Audio)
-    {
-      hr = InitPropVariantFromUInt32(params->Quality, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      hr = pProps->SetValue(MFPKEY_DESIRED_VBRQUALITY, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-    }
-    else if (guidMT == MFMediaType_Video)
-    {
-      hr = InitPropVariantFromUInt32(95, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      hr = pProps->SetValue(MFPKEY_VBRQUALITY, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-    }
-    break;
-
-  default:
-    hr = E_UNEXPECTED;
-    break;
-  }
-
-  */
+  
 
 done:
   PropVariantClear(&var);
@@ -512,17 +371,6 @@ done:
 
 
 
-
-/*
-IMFMediaSink* MediaSink::Activate()
-{
-  IMFMediaSink* result = nullptr;
-  
-  HRESULT hr = _mfActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&result);
-
-  return result;
-}
-*/
 
 
 
@@ -627,11 +475,6 @@ MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source, Param
 
   SetContentInfoMetadata(mfAsfContentInfo, source, params);
   
-  /* holy fuck this works */
-//  PROPVARIANT prop;
-//  hr = InitPropVariantFromString(L"Ding dong the witch is dead?", &prop);
-//  mfMetadata->SetProperty(L"WM/AlbumTitle", &prop);
-
   //Create the activation object for the  file sink
   hr = MFCreateASFMediaSinkActivate(filename, mfAsfContentInfo, &mfActivate);
 

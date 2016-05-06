@@ -10,26 +10,6 @@
 #include "MediaSource.h"
 #include "MediaSink.h"
 #include "Topology.h"
-#include "Globals.h"
-
-
-
-
-
-
-
-/*
-template <class T> void SafeRelease(T **ppT)
-{
-  if (*ppT)
-  {
-    (*ppT)->Release();
-    *ppT = NULL;
-  }
-}
-*/
-
-
 
 
 int wmain(int argc, wchar_t *argv[])

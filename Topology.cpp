@@ -2,7 +2,6 @@
 #include <wmcontainer.h>
 #include <wmcodecdsp.h>
 #include <mfapi.h>
-#include "Globals.h"
 #include "Topology.h"
 
 Topology::Topology(IMFTopology* mfTopology)
@@ -144,119 +143,68 @@ static HRESULT PostEncodingUpdate(IMFTopology *pTopology)
     {
       goto done;
     }
-
-    if (guidMajorType == MFMediaType_Video)
+    hr = pEncoderProps->GetValue(MFPKEY_STAT_BAVG, &var);
+    if (FAILED(hr))
     {
-      hr = pEncoderProps->GetValue(MFPKEY_BAVG, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      hr = pStreamSinkProps->SetValue(MFPKEY_STAT_BAVG, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      PropVariantClear(&var);
-      hr = pEncoderProps->GetValue(MFPKEY_RAVG, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      hr = pStreamSinkProps->SetValue(MFPKEY_STAT_RAVG, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      PropVariantClear(&var);
-      hr = pEncoderProps->GetValue(MFPKEY_BMAX, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      hr = pStreamSinkProps->SetValue(MFPKEY_STAT_BMAX, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      PropVariantClear(&var);
-      hr = pEncoderProps->GetValue(MFPKEY_RMAX, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      hr = pStreamSinkProps->SetValue(MFPKEY_STAT_RMAX, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
+      goto done;
     }
-    else if (guidMajorType == MFMediaType_Audio)
+    hr = pStreamSinkProps->SetValue(MFPKEY_STAT_BAVG, var);
+    if (FAILED(hr))
     {
-      hr = pEncoderProps->GetValue(MFPKEY_STAT_BAVG, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      hr = pStreamSinkProps->SetValue(MFPKEY_STAT_BAVG, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      PropVariantClear(&var);
-      hr = pEncoderProps->GetValue(MFPKEY_STAT_RAVG, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      hr = pStreamSinkProps->SetValue(MFPKEY_STAT_RAVG, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      PropVariantClear(&var);
-      hr = pEncoderProps->GetValue(MFPKEY_STAT_BMAX, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      hr = pStreamSinkProps->SetValue(MFPKEY_STAT_BMAX, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      PropVariantClear(&var);
-      hr = pEncoderProps->GetValue(MFPKEY_STAT_RMAX, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      hr = pStreamSinkProps->SetValue(MFPKEY_STAT_RMAX, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      PropVariantClear(&var);
-      hr = pEncoderProps->GetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      hr = pStreamSinkProps->SetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
+      goto done;
     }
+
+    PropVariantClear(&var);
+    hr = pEncoderProps->GetValue(MFPKEY_STAT_RAVG, &var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+    hr = pStreamSinkProps->SetValue(MFPKEY_STAT_RAVG, var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    PropVariantClear(&var);
+    hr = pEncoderProps->GetValue(MFPKEY_STAT_BMAX, &var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+    hr = pStreamSinkProps->SetValue(MFPKEY_STAT_BMAX, var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    PropVariantClear(&var);
+    hr = pEncoderProps->GetValue(MFPKEY_STAT_RMAX, &var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+    hr = pStreamSinkProps->SetValue(MFPKEY_STAT_RMAX, var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    PropVariantClear(&var);
+    hr = pEncoderProps->GetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, &var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+    hr = pStreamSinkProps->SetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, var);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
     PropVariantClear(&var);
   }
+  
 done:
   pOutputColl->Release();
   pNodeUnk->Release();
@@ -470,12 +418,7 @@ IMFTopologyNode* Topology::AddOutputNode(IMFActivate *mediaSinkActivate,  DWORD 
     goto done;
   }
 
-  // Return the pointer to the caller.
-//  *ppNode = pNode;
-//  (*ppNode)->AddRef();
-
 done:
-//  pNode->Release();
   return pNode;
 }
 
@@ -494,20 +437,11 @@ done:
 //-------------------------------------------------------------------
 
 HRESULT Topology::AddTransformOutputNodes(
-//  MediaSink* mediaSink,
   IMFActivate* pSinkActivate,
   GUID guidMajor,
-//  IMFMediaType* pSourceType,
   IMFTopologyNode **ppNode    // Receives the node pointer.
 )
 {
-  /*
-  if (!pTopology || !pSinkActivate || !pSourceType)
-  {
-    return E_INVALIDARG;
-  }
-  */
-
   IMFTopologyNode* pEncNode = nullptr;
   IMFTopologyNode* pOutputNode = nullptr;
   IMFASFContentInfo* pContentInfo = nullptr;
@@ -519,18 +453,11 @@ HRESULT Topology::AddTransformOutputNodes(
   IMFMediaSink *pSink = nullptr;
 
   GUID guidMT = GUID_NULL;
-//  GUID guidMajor = GUID_NULL;
 
   DWORD cStreams = 0;
   WORD wStreamNumber = 0;
 
   HRESULT hr = S_OK;
-
-//  hr = pSourceType->GetMajorType(&guidMajor);
-//  if (FAILED(hr))
-//  {
-//    goto done;
-//  }
 
   // Create the node.
   hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &pEncNode);
@@ -541,20 +468,11 @@ HRESULT Topology::AddTransformOutputNodes(
 
   //Activate the sink
 
-//  pSink = mediaSink->Activate();
-
   hr = pSinkActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&pSink);
   if (FAILED(hr))
   {
     goto done;
   }
-
-  // BAM dis shit don't work:
-
-  //  IMFMetadataProvider* mfMetadataProvider;
-//  hr = MFGetService(pSink, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&mfMetadataProvider));
-//  HRESULT hr = MFGetService(_mfMediaSource, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&mfMetadataProvider));
-
 
   //find the media type in the sink
   //Get content info from the sink
@@ -620,17 +538,6 @@ HRESULT Topology::AddTransformOutputNodes(
 
       break;
     }
-    if (guidMT == MFMediaType_Video)
-    {
-      hr = MFCreateWMVEncoderActivate(pMediaType, pProps, &pEncoderActivate);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      wprintf_s(L"Video Encoder created. Stream Number: %d .\n", wStreamNumber);
-
-      break;
-    }
   }
 
   // Set the object pointer.
@@ -649,10 +556,6 @@ HRESULT Topology::AddTransformOutputNodes(
 
   //Add the output node to this node.
   pOutputNode = AddOutputNode(pSinkActivate, wStreamNumber);
-//  if (FAILED(hr))
-//  {
-//    goto done;
-//  }
 
   //now we have the output node, connect it to the transform node
   hr = pEncNode->ConnectOutput(0, pOutputNode, 0);
@@ -685,7 +588,6 @@ done:
 // Add a source node to a topology.
 HRESULT Topology::AddSourceNode(
   MediaSource* source,          // Media source.
-//  IMFPresentationDescriptor *pPD,   // Presentation descriptor.
   IMFStreamDescriptor *pSD,         // Stream descriptor.
   IMFTopologyNode **ppNode)         // Receives the node pointer.
 {
@@ -730,7 +632,6 @@ HRESULT Topology::AddSourceNode(
 
 done:
   pNode->Release();
-//  SafeRelease(&pNode);
   return hr;
 }
 
@@ -791,9 +692,6 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
       goto done;
     }
   }
-
-//  *ppTopology = pTopology;
-//  (*ppTopology)->AddRef();
 
 
   wprintf_s(L"Partial Topology Built.\n");

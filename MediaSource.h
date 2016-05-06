@@ -2,7 +2,6 @@
 
 #include <mfidl.h>
 #include "StreamDescriptor.h"
-// #include <mfreadwrite.h>
 
 class MediaSource
 {
@@ -34,7 +33,6 @@ public:
   GUID GetMajorType();
   StreamDescriptor* GetStreamDescriptorByIndex(DWORD index);
 
-//  IMFMediaType *GetCurrentMediaType();
   IMFMediaSource* GetMFMediaSource();
   wchar_t *GetMetadataValue(wchar_t *metadataKey);
 };

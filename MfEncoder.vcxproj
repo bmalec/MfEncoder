@@ -144,8 +144,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommandLineParser.h" />
-    <ClInclude Include="EncodingMode.h" />
-    <ClInclude Include="Globals.h" />
     <ClInclude Include="MediaSink.h" />
     <ClInclude Include="MediaSource.h" />
     <ClInclude Include="Parameters.h" />
@@ -156,7 +154,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CommandLineParser.cpp" />
-    <ClCompile Include="Globals.cpp" />
     <ClCompile Include="MediaSink.cpp" />
     <ClCompile Include="MediaSource.cpp" />
     <ClCompile Include="MfEncoder.cpp" />
