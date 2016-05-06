@@ -172,3 +172,20 @@ StreamDescriptor* MediaSource::GetStreamDescriptorByIndex(DWORD index)
 
   return new StreamDescriptor(mfStreamDescriptor, isSelected);
 }
+
+
+wchar_t* MediaSource::GetMetadataValue(wchar_t *metadataKey)
+{
+  wchar_t *result = nullptr;
+
+  for (int i = 0; i < _metadataItemCount; i++)
+  {
+    if (wcscmp((_metadata + i)->Key, metadataKey) == 0)
+    {
+      result = (_metadata + i)->Value;
+      break;
+    }
+  }
+
+  return result;
+}

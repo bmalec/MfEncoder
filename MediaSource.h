@@ -36,5 +36,5 @@ public:
 
 //  IMFMediaType *GetCurrentMediaType();
   IMFMediaSource* GetMFMediaSource();
-//  wchar_t *GetMetadataValue(wchar_t *metadataKey);
+  wchar_t *GetMetadataValue(wchar_t *metadataKey);
 };

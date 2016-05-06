@@ -549,6 +549,13 @@ HRESULT Topology::AddTransformOutputNodes(
     goto done;
   }
 
+  // BAM dis shit don't work:
+
+  //  IMFMetadataProvider* mfMetadataProvider;
+//  hr = MFGetService(pSink, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&mfMetadataProvider));
+//  HRESULT hr = MFGetService(_mfMediaSource, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&mfMetadataProvider));
+
+
   //find the media type in the sink
   //Get content info from the sink
   hr = pSink->QueryInterface(__uuidof(IMFASFContentInfo), (void**)&pContentInfo);

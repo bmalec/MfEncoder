@@ -151,6 +151,116 @@ static IMFMediaType* GetOutputTypeFromWMAEncoder(Parameters* params)
 }
 
 
+static void SetContentInfoMetadata(IMFASFContentInfo* mfAsfContentInfo, MediaSource* mediaSource, Parameters* parameters)
+{
+  // please work
+
+  IMFMetadataProvider* mfMetadataProvider;
+  IMFMetadata* mfMetadata;
+  PROPVARIANT prop;
+
+
+  HRESULT hr = mfAsfContentInfo->QueryInterface(IID_IMFMetadataProvider, (void**)&mfMetadataProvider);
+  hr = mfMetadataProvider->GetMFMetadata(NULL, 0, 0, &mfMetadata);
+
+  wchar_t *value;
+
+  value = parameters->Album;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/AlbumTitle");
+  }
+
+  if (value)
+  {
+    InitPropVariantFromString(value, &prop);
+    mfMetadata->SetProperty(L"WM/AlbumTitle", &prop);
+  }
+
+  value = parameters->Artist;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"Author");
+  }
+
+  if (value)
+  {
+    InitPropVariantFromString(value, &prop);
+    mfMetadata->SetProperty(L"Author", &prop);
+  }
+
+  value = parameters->Artist;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/AlbumArtist");
+  }
+
+  if (value)
+  {
+    InitPropVariantFromString(value, &prop);
+    mfMetadata->SetProperty(L"WM/AlbumArtist", &prop);
+  }
+
+  value = parameters->Genre;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/Genre");
+  }
+
+  if (value)
+  {
+    InitPropVariantFromString(value, &prop);
+    mfMetadata->SetProperty(L"WM/Genre", &prop);
+  }
+
+  value = parameters->Title;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"Title");
+  }
+
+  if (value)
+  {
+    InitPropVariantFromString(value, &prop);
+    mfMetadata->SetProperty(L"Title", &prop);
+  }
+
+  value = parameters->TrackNumber;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/TrackNumber");
+  }
+
+  if (value)
+  {
+    InitPropVariantFromString(value, &prop);
+    mfMetadata->SetProperty(L"WM/TrackNumber", &prop);
+  }
+
+  value = parameters->Year;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/Year");
+  }
+
+  if (value)
+  {
+    InitPropVariantFromString(value, &prop);
+    mfMetadata->SetProperty(L"WM/Year", &prop);
+  }
+
+  if (mfMetadata) mfMetadata->Release();
+  if (mfMetadataProvider) mfMetadataProvider->Release();
+}
+
+
 
 
 MediaSink::MediaSink(IMFActivate *mfActivate)
@@ -491,7 +601,6 @@ MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source, Param
   //Get stream's encoding property
   hr = mfAsfContentInfo->GetEncodingConfigurationPropertyStore(1, &contentInfoProperties);
 
-
   //Set the stream-level encoding properties
   hr = SetEncodingProperties(source->GetMajorType(), params, contentInfoProperties);
 
@@ -508,8 +617,25 @@ MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source, Param
   //Initialize with the profile
   hr = mfAsfContentInfo->SetProfile(mfAsfProfile);
 
+  // Set MediaSink metadata
+
+  IMFMetadataProvider* mfMetadataProvider;
+  IMFMetadata* mfMetadata;
+
+  hr = mfAsfContentInfo->QueryInterface(IID_IMFMetadataProvider, (void**)&mfMetadataProvider);
+  hr = mfMetadataProvider->GetMFMetadata(NULL, 0, 0, &mfMetadata);
+
+  SetContentInfoMetadata(mfAsfContentInfo, source, params);
+  
+  /* holy fuck this works */
+//  PROPVARIANT prop;
+//  hr = InitPropVariantFromString(L"Ding dong the witch is dead?", &prop);
+//  mfMetadata->SetProperty(L"WM/AlbumTitle", &prop);
+
   //Create the activation object for the  file sink
   hr = MFCreateASFMediaSinkActivate(filename, mfAsfContentInfo, &mfActivate);
+
+  if (mfAsfContentInfo) mfAsfContentInfo->Release();
 
   return new MediaSink(mfActivate);
 
