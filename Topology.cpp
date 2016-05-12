@@ -2,6 +2,7 @@
 #include <wmcontainer.h>
 #include <wmcodecdsp.h>
 #include <mfapi.h>
+#include "Util.h"
 #include "Topology.h"
 
 Topology::Topology(IMFTopology* mfTopology)
@@ -56,9 +57,6 @@ static HRESULT PostEncodingUpdate(IMFTopology *pTopology)
   IPropertyStore* pEncoderProps = nullptr;
 
   GUID guidMajorType = GUID_NULL;
-
-  PROPVARIANT var;
-  PropVariantInit(&var);
 
   DWORD cElements = 0;
 
@@ -143,66 +141,28 @@ static HRESULT PostEncodingUpdate(IMFTopology *pTopology)
     {
       goto done;
     }
-    hr = pEncoderProps->GetValue(MFPKEY_STAT_BAVG, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    hr = pStreamSinkProps->SetValue(MFPKEY_STAT_BAVG, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
 
+    PROPVARIANT var = GetPropertyStoreValue(pEncoderProps, MFPKEY_STAT_BAVG);
+    SetPropertyStoreValue(pStreamSinkProps, MFPKEY_STAT_BAVG, var);
     PropVariantClear(&var);
-    hr = pEncoderProps->GetValue(MFPKEY_STAT_RAVG, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    hr = pStreamSinkProps->SetValue(MFPKEY_STAT_RAVG, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
 
+    var = GetPropertyStoreValue(pEncoderProps, MFPKEY_STAT_RAVG);
+    SetPropertyStoreValue(pStreamSinkProps, MFPKEY_STAT_RAVG, var);
     PropVariantClear(&var);
-    hr = pEncoderProps->GetValue(MFPKEY_STAT_BMAX, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    hr = pStreamSinkProps->SetValue(MFPKEY_STAT_BMAX, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
 
+    var = GetPropertyStoreValue(pEncoderProps, MFPKEY_STAT_BMAX);
+    SetPropertyStoreValue(pStreamSinkProps, MFPKEY_STAT_BMAX, var);
     PropVariantClear(&var);
-    hr = pEncoderProps->GetValue(MFPKEY_STAT_RMAX, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    hr = pStreamSinkProps->SetValue(MFPKEY_STAT_RMAX, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
 
+    var = GetPropertyStoreValue(pEncoderProps, MFPKEY_STAT_RMAX);
+    SetPropertyStoreValue(pStreamSinkProps, MFPKEY_STAT_RMAX, var);
     PropVariantClear(&var);
-    hr = pEncoderProps->GetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    hr = pStreamSinkProps->SetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
 
+    var = GetPropertyStoreValue(pEncoderProps, MFPKEY_WMAENC_AVGBYTESPERSEC);
+    SetPropertyStoreValue(pStreamSinkProps, MFPKEY_WMAENC_AVGBYTESPERSEC, var);
     PropVariantClear(&var);
+
+
   }
   
 done:
@@ -235,7 +195,7 @@ done:
 HRESULT Topology::Encode(Parameters* parameters)
 {
 
-  IMFMediaSession *pSession = nullptr;
+  IMFMediaSession *mfMediaSession = nullptr;
   IMFMediaEvent* pEvent = nullptr;
   IMFTopology* pFullTopology = nullptr;
 
@@ -248,13 +208,13 @@ HRESULT Topology::Encode(Parameters* parameters)
   MF_TOPOSTATUS TopoStatus = MF_TOPOSTATUS_INVALID; // Used with MESessionTopologyStatus event.    
 
 
-  hr = MFCreateMediaSession(nullptr, &pSession);
+  hr = MFCreateMediaSession(nullptr, &mfMediaSession);
   if (FAILED(hr))
   {
     goto done;
   }
 
-  hr = pSession->SetTopology(MFSESSION_SETTOPOLOGY_IMMEDIATE, _mfTopology);
+  hr = mfMediaSession->SetTopology(MFSESSION_SETTOPOLOGY_IMMEDIATE, _mfTopology);
   if (FAILED(hr))
   {
     goto done;
@@ -263,7 +223,7 @@ HRESULT Topology::Encode(Parameters* parameters)
   //Get media session events synchronously
   while (1)
   {
-    hr = pSession->GetEvent(0, &pEvent);
+    hr = mfMediaSession->GetEvent(0, &pEvent);
     if (FAILED(hr))
     {
       goto done;
@@ -300,7 +260,7 @@ HRESULT Topology::Encode(Parameters* parameters)
         PropVariantInit(&var);
         wprintf_s(L"Topology resolved and set on the media session.\n");
 
-        hr = pSession->Start(nullptr, &var);
+        hr = mfMediaSession->Start(nullptr, &var);
         if (FAILED(hr))
         {
           goto done;
@@ -315,7 +275,7 @@ HRESULT Topology::Encode(Parameters* parameters)
       if (status == MF_TOPOSTATUS_ENDED)
       {
         wprintf_s(L"Encoding complete.\n");
-        hr = pSession->Close();
+        hr = mfMediaSession->Close();
         if (FAILED(hr))
         {
           goto done;
@@ -329,7 +289,7 @@ HRESULT Topology::Encode(Parameters* parameters)
 
     case MESessionEnded:
       wprintf_s(L"Encoding complete.\n");
-      hr = pSession->Close();
+      hr = mfMediaSession->Close();
       if (FAILED(hr))
       {
         goto done;
@@ -340,7 +300,7 @@ HRESULT Topology::Encode(Parameters* parameters)
     {
       if (parameters->Quality > 0)
       {
-        hr = pSession->GetFullTopology(MFSESSION_GETFULLTOPOLOGY_CURRENT, 0, &pFullTopology);
+        hr = mfMediaSession->GetFullTopology(MFSESSION_GETFULLTOPOLOGY_CURRENT, 0, &pFullTopology);
         if (FAILED(hr))
         {
           goto done;
@@ -358,7 +318,7 @@ HRESULT Topology::Encode(Parameters* parameters)
     case MESessionClosed:
       wprintf_s(L"Encoding session closed.\n");
 
-      hr = pSession->Shutdown();
+      hr = mfMediaSession->Shutdown();
       goto done;
     }
     if (FAILED(hr))
@@ -371,7 +331,7 @@ HRESULT Topology::Encode(Parameters* parameters)
   }
 done:
   pEvent->Release();
-  pSession->Release();
+  if (mfMediaSession) mfMediaSession->Release();
   pFullTopology->Release();
   return hr;
 }

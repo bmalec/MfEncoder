@@ -126,6 +126,8 @@ int wmain(int argc, wchar_t *argv[])
         //Build the encoding topology.
 
         Topology* topology = Topology::CreatePartialTopograpy(mediaSource, mediaSink);
+
+        wprintf_s(L"Encoding %s\n", findData.cFileName);
         topology->Encode(&parameters);
 
         delete topology;

@@ -5,11 +5,13 @@
 #include <wmcodecdsp.h>
 #include <propvarutil.h>
 #include "Parameters.h"
+#include "Util.h"
 #include "MediaSink.h"
 
-// const INT32 VIDEO_WINDOW_MSEC = 3000;
 
 
+
+/*
 static void SetBooleanProperty(IPropertyStore *propertyStore, PROPERTYKEY key, bool value)
 {
   PROPVARIANT propVar;
@@ -28,7 +30,7 @@ static void SetUint32Property(IPropertyStore *propertyStore, PROPERTYKEY key, UI
   HRESULT hr = propertyStore->SetValue(key, propVar);
   hr = S_OK;
 }
-
+*/
 
 
 //-------------------------------------------------------------------
@@ -77,9 +79,9 @@ static IMFMediaType* GetOutputTypeFromWMAEncoder(Parameters* params)
 
   hr = mfEncoder->QueryInterface(IID_PPV_ARGS(&propertyStore));
 
-  SetBooleanProperty(propertyStore, MFPKEY_VBRENABLED, true);
-  SetBooleanProperty(propertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, true);
-  SetUint32Property(propertyStore, MFPKEY_DESIRED_VBRQUALITY, params->Quality);
+  SetBooleanPropertyStoreValue(propertyStore, MFPKEY_VBRENABLED, TRUE);
+  SetBooleanPropertyStoreValue(propertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, TRUE);
+  SetUint32PropertyStoreValue(propertyStore, MFPKEY_DESIRED_VBRQUALITY, params->Quality);
 
   // this fails with a not_implemented error  hr = propertyStore->Commit();
 
@@ -277,8 +279,9 @@ IMFActivate* MediaSink::GetActivationObject()
 
 
 
+
 //-------------------------------------------------------------------
-//  SetEncodingProperties
+//  SetStreamEncodingProperties
 //  Create a media source from a URL.
 //
 //  guidMT:  Major type of the stream, audio or video
@@ -286,88 +289,29 @@ IMFActivate* MediaSink::GetActivationObject()
 //           to set the required encoding properties.
 //-------------------------------------------------------------------
 
-static HRESULT SetEncodingProperties(const GUID guidMT, Parameters* params, IPropertyStore* pProps)
+static void SetStreamEncodingProperties(Parameters* params, IPropertyStore* propertyStore)
 {
-  if (!pProps)
-  {
-    return E_INVALIDARG;
-  }
-
-  HRESULT hr = S_OK;
-
-  PROPVARIANT var;
+  if (!params) throw std::exception("Null parameter: params");
+  if (!propertyStore) throw std::exception("Null parameter: propertyStore");
 
   if (params->Quality > 0)
   {
     // Quality has been specified, so use quality-based VBR
-
-    hr = InitPropVariantFromBoolean(TRUE, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pProps->SetValue(MFPKEY_VBRENABLED, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
+    SetBooleanPropertyStoreValue(propertyStore, MFPKEY_VBRENABLED, TRUE);
 
     // Number of encoding passes is 1.
-
-    hr = InitPropVariantFromInt32(1, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pProps->SetValue(MFPKEY_PASSESUSED, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
+    SetInt32PropertyStoreValue(propertyStore, MFPKEY_PASSESUSED, 1);
 
     // Set the quality level.
-
-    if (guidMT == MFMediaType_Audio)
-    {
-      hr = InitPropVariantFromUInt32(params->Quality, &var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-
-      hr = pProps->SetValue(MFPKEY_DESIRED_VBRQUALITY, var);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-    }
-
-
+    SetUint32PropertyStoreValue(propertyStore, MFPKEY_DESIRED_VBRQUALITY, params->Quality);
   }
   else
   {
     // quality not specified, use constant bitrate
-    hr = InitPropVariantFromBoolean(FALSE, &var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pProps->SetValue(MFPKEY_VBRENABLED, var);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
+    SetBooleanPropertyStoreValue(propertyStore, MFPKEY_VBRENABLED, FALSE);
   }
-  
-
-done:
-  PropVariantClear(&var);
-  return hr;
 }
+
 
 
 
@@ -382,50 +326,38 @@ done:
 //  wStreamNumber: Stream number to assign for the new stream.
 //-------------------------------------------------------------------
 
-static HRESULT CreateAudioStream(IMFASFProfile* pProfile, Parameters* params, WORD wStreamNumber)
+static void CreateAudioStream(IMFASFProfile* mfAsfProfile, Parameters* params, WORD wStreamNumber)
 {
-  if (!pProfile)
-  {
-    return E_INVALIDARG;
-  }
-  if (wStreamNumber < 1 || wStreamNumber > 127)
-  {
-    return MF_E_INVALIDSTREAMNUMBER;
-  }
+  if (!mfAsfProfile) throw std::exception("Null parameter: pProfile");
+  if (wStreamNumber < 1 || wStreamNumber > 127) throw std::exception("Invalid stream number");
 
-  IMFMediaType* pAudioType = nullptr;
-  IMFASFStreamConfig* pAudioStream = nullptr;
+  IMFMediaType* mfMediaType = nullptr;
+  IMFASFStreamConfig* mfAsfStreamConfig = nullptr;
 
   //Create an output type from the encoder
-  pAudioType = GetOutputTypeFromWMAEncoder(params);
+  mfMediaType = GetOutputTypeFromWMAEncoder(params);
 
-  //Create a new stream with the audio type
-  HRESULT hr = pProfile->CreateStream(pAudioType, &pAudioStream);
-  if (FAILED(hr))
+  HRESULT hr;
+
+  do
   {
-    goto done;
-  }
+    //Create a new stream with the audio type
+    if (!SUCCEEDED(hr = mfAsfProfile->CreateStream(mfMediaType, &mfAsfStreamConfig)))
+      break;
 
-  //Set stream number
-  hr = pAudioStream->SetStreamNumber(wStreamNumber);
+    //Set stream number
+    if (!SUCCEEDED(hr = mfAsfStreamConfig->SetStreamNumber(wStreamNumber)))
+      break;
+
+    //Add the stream to the profile
+    hr = mfAsfProfile->SetStream(mfAsfStreamConfig);
+  } while (0);
+
+  if (mfAsfStreamConfig) mfAsfStreamConfig->Release();
+  if (mfMediaType) mfMediaType->Release();
+
   if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  //Add the stream to the profile
-  hr = pProfile->SetStream(pAudioStream);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  wprintf_s(L"Audio Stream created. Stream Number: %d.\n", wStreamNumber);
-
-done:
-  pAudioStream->Release();
-  pAudioType->Release();
-  return hr;
+    throw std::exception("Error creating audio stream");
 }
 
 
@@ -439,7 +371,7 @@ MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source, Param
 
   hr = MFCreateASFProfile(&mfAsfProfile);
 
-  hr = CreateAudioStream(mfAsfProfile, params, 1);
+  CreateAudioStream(mfAsfProfile, params, 1);
 
   IMFASFContentInfo *mfAsfContentInfo;
   IPropertyStore *contentInfoProperties;
@@ -450,7 +382,9 @@ MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source, Param
   hr = mfAsfContentInfo->GetEncodingConfigurationPropertyStore(1, &contentInfoProperties);
 
   //Set the stream-level encoding properties
-  hr = SetEncodingProperties(source->GetMajorType(), params, contentInfoProperties);
+  SetStreamEncodingProperties(params, contentInfoProperties);
+
+  // TODO: we should release contentInfoProperties here, right????
 
   hr = mfAsfContentInfo->GetEncodingConfigurationPropertyStore(0, &contentInfoProperties);
 
