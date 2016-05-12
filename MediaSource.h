@@ -7,8 +7,8 @@ class MediaSource
 {
   struct MetadataKeyValuePair
   {
-    wchar_t Key[40];
-    wchar_t *Value;
+    PWSTR Key;
+    PWSTR Value;
   };
 
 
@@ -16,8 +16,8 @@ private:
   IMFMediaSource* _mfMediaSource;
   IMFPresentationDescriptor* _mfPresentationDescriptor;
   MetadataKeyValuePair *_metadata;
-  int _metadataItemCount;
   DWORD _streamDescriptorCount;
+  ULONG _metadataPropertyCount;
 
   void LoadMetadataFromSource();
 

@@ -10,10 +10,7 @@ class Topology
 private:
   IMFTopology* _mfTopology;
 
-  HRESULT AddSourceNode(
-    MediaSource* source,          // Media source.
-    IMFStreamDescriptor *pSD,         // Stream descriptor.
-    IMFTopologyNode **ppNode);         // Receives the node pointer.
+  IMFTopologyNode* AddSourceNode(MediaSource* source, IMFStreamDescriptor *pSD);
 
   HRESULT Topology::AddTransformOutputNodes(
     IMFActivate* pSinkActivate,
@@ -33,7 +30,7 @@ protected:
   Topology(IMFTopology* mfTopology);
 
 public:
-  static Topology* BuildPartialTopograpy(MediaSource* source, MediaSink* sink);  // TODO this should not be separate from Create()
+  static Topology* CreatePartialTopograpy(MediaSource* source, MediaSink* sink);  // TODO this should not be separate from Create()
   HRESULT Encode(Parameters* parameters);
 
   ~Topology();

@@ -586,56 +586,37 @@ done:
 
 
 // Add a source node to a topology.
-HRESULT Topology::AddSourceNode(
-  MediaSource* source,          // Media source.
-  IMFStreamDescriptor *pSD,         // Stream descriptor.
-  IMFTopologyNode **ppNode)         // Receives the node pointer.
+IMFTopologyNode* Topology::AddSourceNode(MediaSource* source, IMFStreamDescriptor *mfStreamDescriptor)
 {
-  IMFTopologyNode *pNode = NULL;
+  IMFTopologyNode *pNode = nullptr;
 
-  // Create the node.
-  HRESULT hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &pNode);
-  if (FAILED(hr))
+  HRESULT hr;
+
+  do
   {
-    goto done;
-  }
+    if (!SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &pNode)))
+      break;
 
-  // Set the attributes.
-  hr = pNode->SetUnknown(MF_TOPONODE_SOURCE, source->GetMFMediaSource());
-  if (FAILED(hr))
-  {
-    goto done;
-  }
+    if (!SUCCEEDED(hr = pNode->SetUnknown(MF_TOPONODE_SOURCE, source->GetMFMediaSource())))
+      break;
 
-  hr = pNode->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, source->GetPresentationDescriptor());
-  if (FAILED(hr))
-  {
-    goto done;
-  }
+    if (!SUCCEEDED(hr = pNode->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, source->GetPresentationDescriptor())))
+      break;
 
-  hr = pNode->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, pSD);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
+    if (!SUCCEEDED(hr = pNode->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, mfStreamDescriptor)))
+      break;
 
-  // Add the node to the topology.
-  hr = _mfTopology->AddNode(pNode);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
+    if (!SUCCEEDED(hr = _mfTopology->AddNode(pNode)))
+      break;
+  } while (0);
 
-  // Return the pointer to the caller.
-  *ppNode = pNode;
-  (*ppNode)->AddRef();
+  if (hr != S_OK)
+    throw std::exception("Unable to add source node to topology"); 
 
-done:
-  pNode->Release();
-  return hr;
+  return pNode;
 }
 
-Topology* Topology::BuildPartialTopograpy(MediaSource* source, MediaSink* sink)
+Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* sink)
 {
   IMFTopology* mfTopology = nullptr;
   //Create the topology that represents the encoding pipeline
@@ -673,11 +654,7 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
       continue;
     }
 
-    hr = AddSourceNode(source, streamDescriptor->GetMfStreamDescriptor(), &pSrcNode);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
+    pSrcNode = AddSourceNode(source, streamDescriptor->GetMfStreamDescriptor());
 
     hr = AddTransformOutputNodes(sink->GetActivationObject(), streamDescriptor->GetMajorType(), &pEncoderNode);
     if (FAILED(hr))

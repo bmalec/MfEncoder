@@ -52,7 +52,7 @@ static IMFMediaType* GetOutputTypeFromWMAEncoder(Parameters* params)
   MFT_REGISTER_TYPE_INFO regTypeInfo;
 
   regTypeInfo.guidMajorType = MFMediaType_Audio;
-  regTypeInfo.guidSubtype = MFAudioFormat_WMAudioV9;
+  regTypeInfo.guidSubtype = (params->Quality < 100) ? MFAudioFormat_WMAudioV8 : MFAudioFormat_WMAudio_Lossless;
 
   // Look for an encoder.
 

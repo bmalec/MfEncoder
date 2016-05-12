@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include <objbase.h>
 #include <propvarutil.h>
+#include <stdexcept>
 #include "MediaSource.h"
 
 IMFPresentationDescriptor* MediaSource::GetPresentationDescriptor()
@@ -11,60 +12,60 @@ IMFPresentationDescriptor* MediaSource::GetPresentationDescriptor()
 
 void MediaSource::LoadMetadataFromSource()
 {
-//  IMFPresentationDescriptor* mfPresentationDescriptor;
   IMFMetadataProvider* mfMetadataProvider;
   IMFMetadata* mfMetadata;
-
-//  HRESULT hr = _mfMediaSource->CreatePresentationDescriptor(&mfPresentationDescriptor);
-
-  HRESULT hr = MFGetService(_mfMediaSource, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&mfMetadataProvider));
-
-
-  hr = mfMetadataProvider->GetMFMetadata(_mfPresentationDescriptor, 0, 0, &mfMetadata);
-
-  PROPVARIANT metadataKeys;
-
-  hr = mfMetadata->GetAllPropertyNames(&metadataKeys);
-
+  PROPVARIANT metadataKeys, metadataValue;
   PWSTR *metadataPropertyKeys;
-  ULONG metadataPropertyCount;
+  HRESULT hr;
 
-  PropVariantToStringVectorAlloc(metadataKeys, &metadataPropertyKeys, &metadataPropertyCount);
-
-  _metadataItemCount = metadataPropertyCount;
-
-  _metadata = (MetadataKeyValuePair *)malloc(metadataPropertyCount * sizeof(MetadataKeyValuePair));
-
-  for (int i = 0; i < metadataPropertyCount; i++)
+  _metadataPropertyCount = 0;
+  PropVariantInit(&metadataKeys);
+  PropVariantInit(&metadataValue);
+  
+  do
   {
-    PROPVARIANT metadataValue;
-    PWSTR pvStringBuffer;
+    if (!SUCCEEDED(hr = MFGetService(_mfMediaSource, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&mfMetadataProvider))))
+      break;
 
-    wchar_t *metadataKey = *(metadataPropertyKeys + i);
+    if (!SUCCEEDED(hr = mfMetadataProvider->GetMFMetadata(_mfPresentationDescriptor, 0, 0, &mfMetadata)))
+      break;
 
-    hr = mfMetadata->GetProperty(metadataKey, &metadataValue);
+    if (!SUCCEEDED(hr = mfMetadata->GetAllPropertyNames(&metadataKeys)))
+      break;
 
-    MetadataKeyValuePair *kvp = (_metadata + i);
+    if (!SUCCEEDED(hr = PropVariantToStringVectorAlloc(metadataKeys, &metadataPropertyKeys, &_metadataPropertyCount)))
+      break;
 
-    wcscpy_s(kvp->Key, sizeof(kvp->Key) / sizeof(kvp->Key[0]), metadataKey);
+    _metadata = (MetadataKeyValuePair *)malloc(_metadataPropertyCount * sizeof(MetadataKeyValuePair));
 
-    hr = PropVariantToStringAlloc(metadataValue, &pvStringBuffer);
+    for (ULONG i = 0; i < _metadataPropertyCount; i++)
+    {
+      wchar_t *metadataKey = *(metadataPropertyKeys + i);
 
-    kvp->Value = (wchar_t *)malloc((wcslen(pvStringBuffer) + 1) * sizeof(wchar_t));
+      if (!SUCCEEDED(hr = mfMetadata->GetProperty(metadataKey, &metadataValue)))
+        break;
 
-    wcscpy_s(kvp->Value, wcslen(pvStringBuffer) + 1, pvStringBuffer);
+      (_metadata + i)->Key = metadataKey;
 
-    CoTaskMemFree(pvStringBuffer);
-    //			kvp->Value = metadataValue;
+      if (!SUCCEEDED(hr = PropVariantToStringAlloc(metadataValue, &((_metadata + i)->Value))))
+        break;
 
-    hr = S_OK;
+      PropVariantClear(&metadataValue);
+    }
+
+    if (FAILED(hr))
+      break;
+
+  } while (0);
+
+  if (metadataPropertyKeys) CoTaskMemFree(metadataPropertyKeys);
+  if (mfMetadata) mfMetadata->Release();
+  if (mfMetadataProvider) mfMetadataProvider->Release();
+
+  if (FAILED(hr))
+  {
+    throw std::exception("Error occurred reading metadata from media source");
   }
-
-  CoTaskMemFree(metadataPropertyKeys);
-
-  PropVariantClear(&metadataKeys);
-
-
 }
 
 MediaSource::MediaSource(IMFMediaSource *mfMediaSource)
@@ -78,8 +79,22 @@ MediaSource::MediaSource(IMFMediaSource *mfMediaSource)
 
 MediaSource::~MediaSource()
 {
-  if (_mfMediaSource != nullptr)
+  if (_mfPresentationDescriptor) _mfPresentationDescriptor->Release();
+
+  if (_metadata)
+  {
+    for (ULONG i = 0; i < _metadataPropertyCount; i++)
+    {
+      CoTaskMemFree((_metadata + i)->Key);
+      CoTaskMemFree((_metadata + i)->Value);
+    }
+  }
+
+  if (_mfMediaSource)
+  {
+    _mfMediaSource->Shutdown();
     _mfMediaSource->Release();
+  }
 }
 
 
@@ -104,16 +119,16 @@ MediaSource* MediaSource::Open(const wchar_t *url)
 {
   MF_OBJECT_TYPE ObjectType = MF_OBJECT_INVALID;
 
-  IMFSourceResolver* pSourceResolver = nullptr;
+  IMFSourceResolver* mfSourceResolver = nullptr;
   IMFMediaSource* mfMediaSource = nullptr;
   IUnknown* pSource = nullptr;
 
   // Create the source resolver.
-  HRESULT hr = MFCreateSourceResolver(&pSourceResolver);
+  HRESULT hr = MFCreateSourceResolver(&mfSourceResolver);
 
   // Use the source resolver to create the media source.
 
-  hr = pSourceResolver->CreateObjectFromURL(
+  hr = mfSourceResolver->CreateObjectFromURL(
     url,                       // URL of the source.
     MF_RESOLUTION_MEDIASOURCE,  // Create a source object.
     nullptr,                       // Optional property store.
@@ -124,8 +139,8 @@ MediaSource* MediaSource::Open(const wchar_t *url)
   // Get the IMFMediaSource interface from the media source.
   hr = pSource->QueryInterface(IID_PPV_ARGS(&mfMediaSource));
 
-  pSource->Release();
-  pSourceResolver->Release();
+  if (pSource) pSource->Release();
+  if (mfSourceResolver) mfSourceResolver->Release();
 
   return new MediaSource(mfMediaSource);
 }
@@ -151,7 +166,7 @@ wchar_t* MediaSource::GetMetadataValue(wchar_t *metadataKey)
 {
   wchar_t *result = nullptr;
 
-  for (int i = 0; i < _metadataItemCount; i++)
+  for (int i = 0; i < _metadataPropertyCount; i++)
   {
     if (wcscmp((_metadata + i)->Key, metadataKey) == 0)
     {
