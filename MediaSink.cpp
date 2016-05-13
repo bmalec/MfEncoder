@@ -261,12 +261,15 @@ static void SetContentInfoMetadata(IMFASFContentInfo* mfAsfContentInfo, MediaSou
 MediaSink::MediaSink(IMFActivate *mfActivate)
 {
   _mfActivate = mfActivate;
+  _mfMediaSink = nullptr;
 }
 
 
 
 MediaSink::~MediaSink()
 {
+  if (_mfMediaSink) _mfMediaSink->Release();
+
   if (_mfActivate)
     _mfActivate->Release();
 }
@@ -274,6 +277,17 @@ MediaSink::~MediaSink()
 IMFActivate* MediaSink::GetActivationObject()
 {
   return _mfActivate;
+}
+
+
+void MediaSink::Activate()
+{
+  if (_mfMediaSink) throw std::exception("MediaSink has already been activated");
+
+  HRESULT hr;
+
+  if (!SUCCEEDED(hr = _mfActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&_mfMediaSink)))
+    throw std::exception("Could not activate MediaSink");
 }
 
 
@@ -418,3 +432,9 @@ MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source, Param
 
 }
 
+
+
+IMFMediaSink* MediaSink::GetMFMediaSink()
+{
+  return _mfMediaSink;
+}

@@ -5,9 +5,10 @@
 #include "Util.h"
 #include "Topology.h"
 
-Topology::Topology(IMFTopology* mfTopology)
+Topology::Topology(IMFTopology* mfTopology, MediaSink* mediaSink)
 {
   _mfTopology = mfTopology;
+  _mediaSink = mediaSink;
 }
   
 
@@ -33,41 +34,45 @@ Topology::~Topology()
 //  pTopology: A pointer to the full topology retrieved from the media session.
 //-------------------------------------------------------------------
 
-static HRESULT PostEncodingUpdate(IMFTopology *pTopology)
+static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaSink* mediaSink)
 {
-  /*
-  if (!pTopology)
-  {
-    return E_INVALIDARG;
-  }
-  */
 
   HRESULT hr = S_OK;
 
-  IMFCollection* pOutputColl = nullptr;
+  IMFTopology* mfFullTopology = nullptr;
+  IMFCollection* mfOutputCollection = nullptr;
   IUnknown* pNodeUnk = nullptr;
-  IMFMediaType* pType = nullptr;
-  IMFTopologyNode* pNode = nullptr;
+  IMFMediaType* mfMediaType = nullptr;
+  IMFTopologyNode* mfOutputNode = nullptr;
   IUnknown* pSinkUnk = nullptr;
   IMFStreamSink* pStreamSink = nullptr;
-  IMFTopologyNode* pEncoderNode = nullptr;
+  IMFTopologyNode* mfEncoderNode = nullptr;
   IUnknown* pEncoderUnk = nullptr;
   IMFTransform* pEncoder = nullptr;
   IPropertyStore* pStreamSinkProps = nullptr;
   IPropertyStore* pEncoderProps = nullptr;
 
-  GUID guidMajorType = GUID_NULL;
+//  GUID guidMajorType = GUID_NULL;
 
   DWORD cElements = 0;
 
-  hr = pTopology->GetOutputNodeCollection(&pOutputColl);
+  if (!mfMediaSession) throw std::exception("Null parameter:  mfMediaSession");
+
+  hr = mfMediaSession->GetFullTopology(MFSESSION_GETFULLTOPOLOGY_CURRENT, 0, &mfFullTopology);
   if (FAILED(hr))
   {
     goto done;
   }
 
 
-  hr = pOutputColl->GetElementCount(&cElements);
+  hr = mfFullTopology->GetOutputNodeCollection(&mfOutputCollection);
+  if (FAILED(hr))
+  {
+    goto done;
+  }
+
+
+  hr = mfOutputCollection->GetElementCount(&cElements);
   if (FAILED(hr))
   {
     goto done;
@@ -76,35 +81,36 @@ static HRESULT PostEncodingUpdate(IMFTopology *pTopology)
 
   for (DWORD index = 0; index < cElements; index++)
   {
-    hr = pOutputColl->GetElement(index, &pNodeUnk);
+    hr = mfOutputCollection->GetElement(index, &pNodeUnk);
     if (FAILED(hr))
     {
       goto done;
     }
 
-    hr = pNodeUnk->QueryInterface(IID_IMFTopologyNode, (void**)&pNode);
+    hr = pNodeUnk->QueryInterface(IID_IMFTopologyNode, (void**)&mfOutputNode);
     if (FAILED(hr))
     {
       goto done;
     }
 
-    hr = pNode->GetInputPrefType(0, &pType);
+    hr = mfOutputNode->GetInputPrefType(0, &mfMediaType);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+/*
+    hr = mfMediaType->GetMajorType(&guidMajorType);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+*/
+    hr = mfOutputNode->GetObject(&pSinkUnk);
     if (FAILED(hr))
     {
       goto done;
     }
 
-    hr = pType->GetMajorType(&guidMajorType);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pNode->GetObject(&pSinkUnk);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
 
     hr = pSinkUnk->QueryInterface(IID_IMFStreamSink, (void**)&pStreamSink);
     if (FAILED(hr))
@@ -112,13 +118,14 @@ static HRESULT PostEncodingUpdate(IMFTopology *pTopology)
       goto done;
     }
 
-    hr = pNode->GetInput(0, &pEncoderNode, nullptr);
+
+    hr = mfOutputNode->GetInput(0, &mfEncoderNode, nullptr);
     if (FAILED(hr))
     {
       goto done;
     }
 
-    hr = pEncoderNode->GetObject(&pEncoderUnk);
+    hr = mfEncoderNode->GetObject(&pEncoderUnk);
     if (FAILED(hr))
     {
       goto done;
@@ -166,17 +173,18 @@ static HRESULT PostEncodingUpdate(IMFTopology *pTopology)
   }
   
 done:
-  pOutputColl->Release();
+  mfOutputCollection->Release();
   pNodeUnk->Release();
-  pType->Release();
-  pNode->Release();
+  mfMediaType->Release();
+  mfOutputNode->Release();
   pSinkUnk->Release();
   pStreamSink->Release();
-  pEncoderNode->Release();
+  mfEncoderNode->Release();
   pEncoderUnk->Release();
   pEncoder->Release();
   pStreamSinkProps->Release();
   pEncoderProps->Release();
+  if (mfFullTopology) mfFullTopology->Release();
 
   return hr;
 
@@ -197,7 +205,7 @@ HRESULT Topology::Encode(Parameters* parameters)
 
   IMFMediaSession *mfMediaSession = nullptr;
   IMFMediaEvent* pEvent = nullptr;
-  IMFTopology* pFullTopology = nullptr;
+//  IMFTopology* pFullTopology = nullptr;
 
 
   MediaEventType meType = MEUnknown;  // Event type
@@ -300,12 +308,7 @@ HRESULT Topology::Encode(Parameters* parameters)
     {
       if (parameters->Quality > 0)
       {
-        hr = mfMediaSession->GetFullTopology(MFSESSION_GETFULLTOPOLOGY_CURRENT, 0, &pFullTopology);
-        if (FAILED(hr))
-        {
-          goto done;
-        }
-        hr = PostEncodingUpdate(pFullTopology);
+        hr = UpdateVbrStreamProperties(mfMediaSession, _mediaSink);
         if (FAILED(hr))
         {
           goto done;
@@ -332,7 +335,7 @@ HRESULT Topology::Encode(Parameters* parameters)
 done:
   pEvent->Release();
   if (mfMediaSession) mfMediaSession->Release();
-  pFullTopology->Release();
+//  pFullTopology->Release();
   return hr;
 }
 
@@ -340,7 +343,7 @@ done:
 
 
 // Add an output node to a topology.
-IMFTopologyNode* Topology::AddOutputNode(IMFActivate *mediaSinkActivate,  DWORD dwId)
+IMFTopologyNode* Topology::AddOutputNode(MediaSink* mediaSink,  DWORD dwId)
 {
   IMFTopologyNode *pNode = nullptr;
 
@@ -352,7 +355,7 @@ IMFTopologyNode* Topology::AddOutputNode(IMFActivate *mediaSinkActivate,  DWORD 
   }
 
   // Set the object pointer.
-  hr = pNode->SetObject(mediaSinkActivate);
+  hr = pNode->SetObject(mediaSink->GetActivationObject());
   if (FAILED(hr))
   {
     goto done;
@@ -397,7 +400,8 @@ done:
 //-------------------------------------------------------------------
 
 HRESULT Topology::AddTransformOutputNodes(
-  IMFActivate* pSinkActivate,
+  MediaSink* mediaSink,
+//  IMFActivate* pSinkActivate,
   GUID guidMajor,
   IMFTopologyNode **ppNode    // Receives the node pointer.
 )
@@ -410,7 +414,7 @@ HRESULT Topology::AddTransformOutputNodes(
   IMFMediaType* pMediaType = nullptr;
   IPropertyStore* pProps = nullptr;
   IMFActivate *pEncoderActivate = nullptr;
-  IMFMediaSink *pSink = nullptr;
+  IMFMediaSink* mfMediaSink = nullptr;
 
   GUID guidMT = GUID_NULL;
 
@@ -428,15 +432,20 @@ HRESULT Topology::AddTransformOutputNodes(
 
   //Activate the sink
 
-  hr = pSinkActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&pSink);
+  mediaSink->Activate();
+/*
+  hr = pSinkActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&mfMediaSink);
   if (FAILED(hr))
   {
     goto done;
   }
-
+*/
   //find the media type in the sink
   //Get content info from the sink
-  hr = pSink->QueryInterface(__uuidof(IMFASFContentInfo), (void**)&pContentInfo);
+
+  mfMediaSink = mediaSink->GetMFMediaSink();
+
+  hr = mfMediaSink->QueryInterface(__uuidof(IMFASFContentInfo), (void**)&pContentInfo);
   if (FAILED(hr))
   {
     goto done;
@@ -515,7 +524,7 @@ HRESULT Topology::AddTransformOutputNodes(
   }
 
   //Add the output node to this node.
-  pOutputNode = AddOutputNode(pSinkActivate, wStreamNumber);
+  pOutputNode = AddOutputNode(mediaSink, wStreamNumber);
 
   //now we have the output node, connect it to the transform node
   hr = pEncNode->ConnectOutput(0, pOutputNode, 0);
@@ -538,7 +547,7 @@ done:
   pStream->Release();
   pProfile->Release();
   pContentInfo->Release();
-  pSink->Release();
+//  mfMediaSink->Release();
 
   return hr;
 }
@@ -576,14 +585,14 @@ IMFTopologyNode* Topology::AddSourceNode(MediaSource* source, IMFStreamDescripto
   return pNode;
 }
 
-Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* sink)
+Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* mediaSink)
 {
   IMFTopology* mfTopology = nullptr;
   //Create the topology that represents the encoding pipeline
   HRESULT hr = MFCreateTopology(&mfTopology);
 
-  Topology* topology = new Topology(mfTopology);
-  topology->_buildPartialTopograpy(source, sink);
+  Topology* topology = new Topology(mfTopology, mediaSink);
+  topology->_buildPartialTopograpy(source, mediaSink);
 
   return topology;
 }
@@ -616,7 +625,7 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
 
     pSrcNode = AddSourceNode(source, streamDescriptor->GetMfStreamDescriptor());
 
-    hr = AddTransformOutputNodes(sink->GetActivationObject(), streamDescriptor->GetMajorType(), &pEncoderNode);
+    hr = AddTransformOutputNodes(sink, streamDescriptor->GetMajorType(), &pEncoderNode);
     if (FAILED(hr))
     {
       goto done;
