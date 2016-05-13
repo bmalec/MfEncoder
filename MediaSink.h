@@ -20,8 +20,10 @@ public:
 
   void Activate();
 
-  IMFActivate* GetActivationObject();
+//   IMFActivate* GetActivationObject();
   IMFMediaSink* GetMFMediaSink();
+  IMFStreamSink* GetMFStreamSinkByIndex(DWORD id);
+
 };
 
 

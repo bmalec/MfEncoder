@@ -345,44 +345,35 @@ done:
 // Add an output node to a topology.
 IMFTopologyNode* Topology::AddOutputNode(MediaSink* mediaSink,  DWORD dwId)
 {
-  IMFTopologyNode *pNode = nullptr;
+  IMFTopologyNode *mfTopologyNode = nullptr;
+  HRESULT hr;
 
-  // Create the node.
-  HRESULT hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &pNode);
-  if (FAILED(hr))
+  do
   {
-    goto done;
-  }
+    // Create the node.
+    if (!SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &mfTopologyNode)))
+      break;
 
-  // Set the object pointer.
-  hr = pNode->SetObject(mediaSink->GetActivationObject());
+    // Set the object pointer.
+    if (!SUCCEEDED(hr = mfTopologyNode->SetObject(mediaSink->GetMFStreamSinkByIndex(0))))
+      break;
+
+    // Set the stream sink ID attribute.
+    if (!SUCCEEDED(hr = mfTopologyNode->SetUINT32(MF_TOPONODE_STREAMID, dwId)))
+      break;
+
+    if (!SUCCEEDED(hr = mfTopologyNode->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE)))
+      break;
+
+    // Add the node to the topology.
+    if (!SUCCEEDED(hr = _mfTopology->AddNode(mfTopologyNode)))
+      break;
+  } while (0);
+
   if (FAILED(hr))
-  {
-    goto done;
-  }
+    throw std::exception("Unable to create topology output node");
 
-  // Set the stream sink ID attribute.
-  hr = pNode->SetUINT32(MF_TOPONODE_STREAMID, dwId);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  hr = pNode->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  // Add the node to the topology.
-  hr = _mfTopology->AddNode(pNode);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-done:
-  return pNode;
+  return mfTopologyNode;
 }
 
 

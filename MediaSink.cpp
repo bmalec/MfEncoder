@@ -274,10 +274,13 @@ MediaSink::~MediaSink()
     _mfActivate->Release();
 }
 
+/* boo, go away!
 IMFActivate* MediaSink::GetActivationObject()
 {
   return _mfActivate;
 }
+
+*/
 
 
 void MediaSink::Activate()
@@ -437,4 +440,17 @@ MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source, Param
 IMFMediaSink* MediaSink::GetMFMediaSink()
 {
   return _mfMediaSink;
+}
+
+
+IMFStreamSink* MediaSink::GetMFStreamSinkByIndex(DWORD index)
+{
+  IMFStreamSink* mfStreamSink;
+
+  HRESULT hr;
+
+  if (!SUCCEEDED(hr = _mfMediaSink->GetStreamSinkByIndex(index, &mfStreamSink)))
+    throw std::exception("Unable to retrieve stream sink");
+
+  return mfStreamSink;
 }
