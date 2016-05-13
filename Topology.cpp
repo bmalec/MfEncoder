@@ -42,9 +42,9 @@ static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaS
   IMFTopology* mfFullTopology = nullptr;
   IMFCollection* mfOutputCollection = nullptr;
   IUnknown* pNodeUnk = nullptr;
-  IMFMediaType* mfMediaType = nullptr;
+//  IMFMediaType* mfMediaType = nullptr;
   IMFTopologyNode* mfOutputNode = nullptr;
-  IUnknown* pSinkUnk = nullptr;
+//  IUnknown* pSinkUnk = nullptr;
   IMFStreamSink* pStreamSink = nullptr;
   IMFTopologyNode* mfEncoderNode = nullptr;
   IUnknown* pEncoderUnk = nullptr;
@@ -81,6 +81,7 @@ static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaS
 
   for (DWORD index = 0; index < cElements; index++)
   {
+    
     hr = mfOutputCollection->GetElement(index, &pNodeUnk);
     if (FAILED(hr))
     {
@@ -93,26 +94,37 @@ static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaS
       goto done;
     }
 
+    /*
+
     hr = mfOutputNode->GetInputPrefType(0, &mfMediaType);
     if (FAILED(hr))
     {
       goto done;
     }
-/*
+
     hr = mfMediaType->GetMajorType(&guidMajorType);
     if (FAILED(hr))
     {
       goto done;
     }
-*/
+
     hr = mfOutputNode->GetObject(&pSinkUnk);
     if (FAILED(hr))
     {
       goto done;
     }
-
-
+*/
+    /*
     hr = pSinkUnk->QueryInterface(IID_IMFStreamSink, (void**)&pStreamSink);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+    */
+
+    pStreamSink = mediaSink->GetMFStreamSinkByIndex(index);
+
+    hr = pStreamSink->QueryInterface(IID_IPropertyStore, (void**)&pStreamSinkProps);
     if (FAILED(hr))
     {
       goto done;
@@ -137,11 +149,6 @@ static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaS
       goto done;
     }
 
-    hr = pStreamSink->QueryInterface(IID_IPropertyStore, (void**)&pStreamSinkProps);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
 
     hr = pEncoder->QueryInterface(IID_IPropertyStore, (void**)&pEncoderProps);
     if (FAILED(hr))
@@ -175,9 +182,9 @@ static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaS
 done:
   mfOutputCollection->Release();
   pNodeUnk->Release();
-  mfMediaType->Release();
+//  mfMediaType->Release();
   mfOutputNode->Release();
-  pSinkUnk->Release();
+//  pSinkUnk->Release();
   pStreamSink->Release();
   mfEncoderNode->Release();
   pEncoderUnk->Release();
@@ -423,7 +430,7 @@ HRESULT Topology::AddTransformOutputNodes(
 
   //Activate the sink
 
-  mediaSink->Activate();
+// trying this at sink creation time  mediaSink->Activate();
 /*
   hr = pSinkActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&mfMediaSink);
   if (FAILED(hr))

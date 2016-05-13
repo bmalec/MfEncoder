@@ -258,20 +258,17 @@ static void SetContentInfoMetadata(IMFASFContentInfo* mfAsfContentInfo, MediaSou
 
 
 
-MediaSink::MediaSink(IMFActivate *mfActivate)
+MediaSink::MediaSink(IMFMediaSink *mfMediaSink)
 {
-  _mfActivate = mfActivate;
-  _mfMediaSink = nullptr;
+//  _mfActivate = mfActivate;
+  _mfMediaSink = mfMediaSink;
 }
 
 
 
 MediaSink::~MediaSink()
 {
-  if (_mfMediaSink) _mfMediaSink->Release();
-
-  if (_mfActivate)
-    _mfActivate->Release();
+  _mfMediaSink->Release();
 }
 
 /* boo, go away!
@@ -282,6 +279,7 @@ IMFActivate* MediaSink::GetActivationObject()
 
 */
 
+/*
 
 void MediaSink::Activate()
 {
@@ -293,7 +291,7 @@ void MediaSink::Activate()
     throw std::exception("Could not activate MediaSink");
 }
 
-
+*/
 
 
 
@@ -383,7 +381,8 @@ MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source, Param
 {
   HRESULT hr;
   IMFASFProfile *mfAsfProfile = nullptr;
-  IMFActivate *mfActivate;
+  IMFActivate *mfActivate = nullptr;
+  IMFMediaSink* mfMediaSink = nullptr;
 
 
   hr = MFCreateASFProfile(&mfAsfProfile);
@@ -429,10 +428,13 @@ MediaSink* MediaSink::Create(const wchar_t *filename, MediaSource* source, Param
   //Create the activation object for the  file sink
   hr = MFCreateASFMediaSinkActivate(filename, mfAsfContentInfo, &mfActivate);
 
-  if (mfAsfContentInfo) mfAsfContentInfo->Release();
+  if (!SUCCEEDED(hr = mfActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&mfMediaSink)))
+    throw std::exception("Could not activate MediaSink");
 
-  return new MediaSink(mfActivate);
+  mfActivate->Release();
+  mfAsfContentInfo->Release();
 
+  return new MediaSink(mfMediaSink);
 }
 
 

@@ -7,18 +7,18 @@
 class MediaSink
 {
 private:
-  IMFActivate* _mfActivate;
+//  IMFActivate* _mfActivate;
   IMFMediaSink* _mfMediaSink;
 
 
 protected:
-  MediaSink(IMFActivate* mfActivate);
+  MediaSink(IMFMediaSink* mediaSink);
 
 public:
   static MediaSink *Create(const wchar_t *url, MediaSource* source, Parameters* params);
   ~MediaSink();
 
-  void Activate();
+//  void Activate();
 
 //   IMFActivate* GetActivationObject();
   IMFMediaSink* GetMFMediaSink();
