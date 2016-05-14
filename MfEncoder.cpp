@@ -13,6 +13,98 @@
 #include "AudioEncoder.h"
 
 
+static void SetMediaSinkContentInfoMetadata(MediaSinkContentInfo* contentInfo, MediaSource* mediaSource, Parameters* commandLineParameters)
+{
+  // please work
+
+  wchar_t *value;
+
+  value = commandLineParameters->Album;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/AlbumTitle");
+  }
+  
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"WM/AlbumTitle", value);
+  }
+
+  value = commandLineParameters->Artist;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"Author");
+  }
+
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"Author", value);
+  }
+
+  value = commandLineParameters->Artist;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/AlbumArtist");
+  }
+
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"WM/AlbumArtist", value);
+  }
+
+  value = commandLineParameters->Genre;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/Genre");
+  }
+
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"WM/Genre", value);
+  }
+
+  value = commandLineParameters->Title;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"Title");
+  }
+
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"Title", value);
+  }
+
+  value = commandLineParameters->TrackNumber;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/TrackNumber");
+  }
+
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"WM/TrackNumber", value);
+  }
+
+  value = commandLineParameters->Year;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/Year");
+  }
+
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"WM/Year", value);
+  }
+}
+
+
 int wmain(int argc, wchar_t *argv[])
 {
   Parameters parameters;
@@ -131,6 +223,7 @@ int wmain(int argc, wchar_t *argv[])
 
         MediaSinkContentInfo *contentInfo = new MediaSinkContentInfo();
         contentInfo->AddStreamSink(1, encoderParameters);
+        SetMediaSinkContentInfoMetadata(contentInfo, mediaSource, &parameters);
 
         MediaSink* mediaSink = MediaSink::Create(outputFilename, contentInfo);
 

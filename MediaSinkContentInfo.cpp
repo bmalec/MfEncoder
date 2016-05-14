@@ -1,21 +1,54 @@
 #include "stdafx.h"
+#include <windows.h>
+#include <propvarutil.h>
 #include <stdexcept>
 #include "MediaSinkContentInfo.h"
 
 
 MediaSinkContentInfo::MediaSinkContentInfo()
 {
-  if (!SUCCEEDED(MFCreateASFContentInfo(&_mfAsfContentInfo)))
-    throw std::exception("Unable to create ASF ContentInfo object");
+  HRESULT hr;
 
-  if (!SUCCEEDED(MFCreateASFProfile(&_mfAsfProfile)))
-    throw std::exception("Unable to create ASF Profile object");
+  _mfAsfContentInfo = nullptr;
+  _mfAsfProfile = nullptr;
+  _mfMetadataProvider = nullptr;
+  _mfMetadata = nullptr;
+
+  do
+  {
+    if (!SUCCEEDED(hr = MFCreateASFContentInfo(&_mfAsfContentInfo)))
+      break;
+
+    if (!SUCCEEDED(hr = MFCreateASFProfile(&_mfAsfProfile)))
+      break;
+
+    if (!SUCCEEDED(hr = _mfAsfContentInfo->QueryInterface(IID_IMFMetadataProvider, (void**)&_mfMetadataProvider)))
+      break;
+
+    if (!SUCCEEDED(hr = _mfMetadataProvider->GetMFMetadata(NULL, 0, 0, &_mfMetadata)))
+      break;
+  } while (0);
+
+  if (FAILED(hr))
+  {
+    if (_mfMetadata) _mfMetadata->Release();
+    if (_mfMetadataProvider) _mfMetadataProvider->Release();
+    if (_mfAsfProfile) _mfAsfProfile->Release();
+    if (_mfAsfContentInfo) _mfAsfContentInfo->Release();
+
+    throw std::exception("Unable to create MediaSinkContentInfo object");
+  }
 }
+
+
+
 
 
 
 MediaSinkContentInfo::~MediaSinkContentInfo()
 {
+  _mfMetadata->Release();
+  _mfMetadataProvider->Release();
   _mfAsfProfile->Release();
   _mfAsfContentInfo->Release();
 }
@@ -74,6 +107,16 @@ void MediaSinkContentInfo::AddStreamSink(WORD streamNumber, AudioEncoderParamete
   if (FAILED(hr))
     throw std::exception("Unable to add stream to the MediaSink");
 }
+
+void MediaSinkContentInfo::SetMetadataAsString(LPWSTR field, LPWSTR value)
+{
+  PROPVARIANT pv;
+
+  InitPropVariantFromString(value, &pv);
+  HRESULT hr = _mfMetadata->SetProperty(field, &pv);
+//  PropVariantClear(&pv);
+}
+
 
 
 IMFASFContentInfo* MediaSinkContentInfo::GetMfAsfContentInfoObject()

@@ -8,9 +8,7 @@
 class MediaSink
 {
 private:
-//  IMFActivate* _mfActivate;
   IMFMediaSink* _mfMediaSink;
-
 
 protected:
   MediaSink(IMFMediaSink* mediaSink);
@@ -22,9 +20,6 @@ public:
 
   ~MediaSink();
 
-//  void Activate();
-
-//   IMFActivate* GetActivationObject();
   IMFMediaSink* GetMFMediaSink();
   IMFStreamSink* GetMFStreamSinkByIndex(DWORD id);
 
