@@ -10,6 +10,7 @@
 #include "MediaSource.h"
 #include "MediaSink.h"
 #include "Topology.h"
+#include "AudioEncoder.h"
 
 
 int wmain(int argc, wchar_t *argv[])
@@ -66,6 +67,8 @@ int wmain(int argc, wchar_t *argv[])
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     HRESULT hr = MFStartup(MF_VERSION);
 
+    IMFMediaType* mfMediaType = AudioEncoder::GetQualityBasedMediaType(parameters.Quality);
+
     // Use the Windows shell API to extract the path component from the input filename
 
     wchar_t srcFileFolder[MAX_PATH];
@@ -121,7 +124,8 @@ int wmain(int argc, wchar_t *argv[])
           wcscpy(outputFilename, parameters.OutputFilename);
         }
 
-        MediaSink* mediaSink = MediaSink::Create(outputFilename, mediaSource, &parameters);
+// old        MediaSink* mediaSink = MediaSink::Create(outputFilename, mediaSource, &parameters);
+        MediaSink* mediaSink = MediaSink::Create(outputFilename, mfMediaType);
 
         //Build the encoding topology.
 

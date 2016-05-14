@@ -16,6 +16,8 @@ protected:
 
 public:
   static MediaSink *Create(const wchar_t *url, MediaSource* source, Parameters* params);
+  static MediaSink *Create(const wchar_t *url, IMFMediaType* mfMediaType);
+
   ~MediaSink();
 
 //  void Activate();

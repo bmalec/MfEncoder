@@ -456,3 +456,120 @@ IMFStreamSink* MediaSink::GetMFStreamSinkByIndex(DWORD index)
 
   return mfStreamSink;
 }
+
+
+
+MediaSink* MediaSink::Create(const wchar_t *url, IMFMediaType* mfMediaType)
+{
+  IMFASFContentInfo *mfAsfContentInfo;
+  IMFASFProfile *mfAsfProfile;
+  IMFASFStreamConfig *mfStreamConfig;
+  IMFActivate *mfActivate;
+  IMFMediaSink *mfMediaSink;
+  HRESULT hr;
+
+    if (!SUCCEEDED(MFCreateASFContentInfo(&mfAsfContentInfo)))
+    throw std::exception("Unable to create ASF ContentInfo object");
+
+    if (!SUCCEEDED(MFCreateASFProfile(&mfAsfProfile)))
+      throw std::exception("Unable to create ASF Profile object");
+
+    IPropertyStore *streamPropertyStore;
+    hr = mfAsfContentInfo->GetEncodingConfigurationPropertyStore(1, &streamPropertyStore);
+
+    SetBooleanPropertyStoreValue(streamPropertyStore, MFPKEY_VBRENABLED, TRUE);
+
+    // Number of encoding passes is 1.
+// test    SetInt32PropertyStoreValue(streamPropertyStore, MFPKEY_PASSESUSED, 1);
+    SetBooleanPropertyStoreValue(streamPropertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, TRUE);
+
+    // Set the quality level.
+    SetUint32PropertyStoreValue(streamPropertyStore, MFPKEY_DESIRED_VBRQUALITY, 90);
+
+    hr = mfAsfProfile->CreateStream(mfMediaType, &mfStreamConfig);
+    hr = mfStreamConfig->SetStreamNumber(1);
+    hr = mfAsfProfile->SetStream(mfStreamConfig);
+    mfAsfContentInfo->SetProfile(mfAsfProfile);
+
+    //Create the activation object for the  file sink
+    hr = MFCreateASFMediaSinkActivate(url, mfAsfContentInfo, &mfActivate);
+
+    if (!SUCCEEDED(hr = mfActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&mfMediaSink)))
+      throw std::exception("Could not activate MediaSink");
+
+    mfActivate->Release();
+    mfAsfContentInfo->Release();
+
+    return new MediaSink(mfMediaSink);
+
+
+
+
+
+
+/*
+
+
+
+
+
+
+
+  IMFASFProfile *mfAsfProfile = nullptr;
+  IMFActivate *mfActivate = nullptr;
+  IMFMediaSink* mfMediaSink = nullptr;
+  
+  hr = MFCreateASFProfile(&mfAsfProfile);
+
+  CreateAudioStream(mfAsfProfile, params, 1);
+
+  IMFASFContentInfo *mfAsfContentInfo;
+  IPropertyStore *contentInfoProperties;
+
+  hr = MFCreateASFContentInfo(&mfAsfContentInfo);
+
+  //Get stream's encoding property
+  hr = mfAsfContentInfo->GetEncodingConfigurationPropertyStore(1, &contentInfoProperties);
+
+  //Set the stream-level encoding properties
+  SetStreamEncodingProperties(params, contentInfoProperties);
+
+  // TODO: we should release contentInfoProperties here, right????
+
+  hr = mfAsfContentInfo->GetEncodingConfigurationPropertyStore(0, &contentInfoProperties);
+
+  PROPVARIANT var;
+  PropVariantInit(&var);
+
+  var.vt = VT_BOOL;
+  var.boolVal = VARIANT_TRUE;
+
+  hr = contentInfoProperties->SetValue(MFPKEY_ASFMEDIASINK_AUTOADJUST_BITRATE, var);
+
+  //Initialize with the profile
+  hr = mfAsfContentInfo->SetProfile(mfAsfProfile);
+
+  // Set MediaSink metadata
+
+  IMFMetadataProvider* mfMetadataProvider;
+  IMFMetadata* mfMetadata;
+
+  hr = mfAsfContentInfo->QueryInterface(IID_IMFMetadataProvider, (void**)&mfMetadataProvider);
+  hr = mfMetadataProvider->GetMFMetadata(NULL, 0, 0, &mfMetadata);
+
+  SetContentInfoMetadata(mfAsfContentInfo, source, params);
+
+  //Create the activation object for the  file sink
+  hr = MFCreateASFMediaSinkActivate(filename, mfAsfContentInfo, &mfActivate);
+
+  if (!SUCCEEDED(hr = mfActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&mfMediaSink)))
+    throw std::exception("Could not activate MediaSink");
+
+  mfActivate->Release();
+  mfAsfContentInfo->Release();
+
+  return new MediaSink(mfMediaSink);
+*/
+
+}
+
