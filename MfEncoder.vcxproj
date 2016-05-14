@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="AudioEncoder.h" />
     <ClInclude Include="CommandLineParser.h" />
+    <ClInclude Include="MediaSinkContentInfo.h" />
     <ClInclude Include="MediaSink.h" />
     <ClInclude Include="MediaSource.h" />
     <ClInclude Include="Parameters.h" />
@@ -159,6 +160,7 @@
     <ClCompile Include="AudioEncoder.cpp" />
     <ClCompile Include="CommandLineParser.cpp" />
     <ClCompile Include="MediaSink.cpp" />
+    <ClCompile Include="MediaSinkContentInfo.cpp" />
     <ClCompile Include="MediaSource.cpp" />
     <ClCompile Include="MfEncoder.cpp" />
     <ClCompile Include="PropertyStore.cpp" />

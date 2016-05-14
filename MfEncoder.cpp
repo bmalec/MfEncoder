@@ -25,6 +25,8 @@ int wmain(int argc, wchar_t *argv[])
 
   CommandLineParser::Parse(argc, argv, &parameters);
 
+  AudioEncoderParameters* encoderParameters = AudioEncoderParameters::CreateQualityBasedVbrParameters(75, 2, 44100, 16);
+
   // Verify that output folder exists, if specified
   // (and add a '\' to it if it doesn't exist)
 
@@ -67,7 +69,7 @@ int wmain(int argc, wchar_t *argv[])
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     HRESULT hr = MFStartup(MF_VERSION);
 
-    IMFMediaType* mfMediaType = AudioEncoder::GetQualityBasedMediaType(parameters.Quality);
+//    IMFMediaType* mfMediaType = AudioEncoder::GetQualityBasedMediaType(parameters.Quality);
 
     // Use the Windows shell API to extract the path component from the input filename
 
@@ -125,7 +127,12 @@ int wmain(int argc, wchar_t *argv[])
         }
 
 // old        MediaSink* mediaSink = MediaSink::Create(outputFilename, mediaSource, &parameters);
-        MediaSink* mediaSink = MediaSink::Create(outputFilename, mfMediaType);
+// slightly newer, but still old        MediaSink* mediaSink = MediaSink::Create(outputFilename, mfMediaType, &parameters);
+
+        MediaSinkContentInfo *contentInfo = new MediaSinkContentInfo();
+        contentInfo->AddStreamSink(1, encoderParameters);
+
+        MediaSink* mediaSink = MediaSink::Create(outputFilename, contentInfo);
 
         //Build the encoding topology.
 
