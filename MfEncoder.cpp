@@ -117,7 +117,7 @@ int wmain(int argc, wchar_t *argv[])
 
   CommandLineParser::Parse(argc, argv, &parameters);
 
-  AudioEncoderParameters* encoderParameters = AudioEncoderParameters::CreateQualityBasedVbrParameters(75, 2, 44100, 16);
+  AudioEncoderParameters* encoderParameters = AudioEncoderParameters::CreateQualityBasedVbrParameters(parameters.Quality, 2, 44100, 16);
 
   // Verify that output folder exists, if specified
   // (and add a '\' to it if it doesn't exist)
@@ -217,9 +217,6 @@ int wmain(int argc, wchar_t *argv[])
         {
           wcscpy(outputFilename, parameters.OutputFilename);
         }
-
-// old        MediaSink* mediaSink = MediaSink::Create(outputFilename, mediaSource, &parameters);
-// slightly newer, but still old        MediaSink* mediaSink = MediaSink::Create(outputFilename, mfMediaType, &parameters);
 
         MediaSinkContentInfo *contentInfo = new MediaSinkContentInfo();
         contentInfo->AddStreamSink(1, encoderParameters);
