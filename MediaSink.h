@@ -20,6 +20,10 @@ public:
   IMFMediaSink* GetMFMediaSink();
   IMFStreamSink* GetMFStreamSinkByIndex(DWORD id);
   IPropertyStore* GetEncoderConfigurationPropertyStore(WORD streamNumber);
+  IMFTopologyNode* CreateTopologyOutputNode(WORD streamNumber);
+  IMFTopologyNode* CreateTopologyTransformNode(WORD streamNumber);
+
+
 
 
 };

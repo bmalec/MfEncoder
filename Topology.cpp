@@ -42,9 +42,7 @@ static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaS
   IMFTopology* mfFullTopology = nullptr;
   IMFCollection* mfOutputCollection = nullptr;
   IUnknown* pNodeUnk = nullptr;
-//  IMFMediaType* mfMediaType = nullptr;
   IMFTopologyNode* mfOutputNode = nullptr;
-//  IUnknown* pSinkUnk = nullptr;
   IMFStreamSink* pStreamSink = nullptr;
   IMFTopologyNode* mfEncoderNode = nullptr;
   IUnknown* pEncoderUnk = nullptr;
@@ -52,7 +50,6 @@ static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaS
   IPropertyStore* pStreamSinkProps = nullptr;
   IPropertyStore* pEncoderProps = nullptr;
 
-//  GUID guidMajorType = GUID_NULL;
 
   DWORD cElements = 0;
 
@@ -94,33 +91,6 @@ static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaS
       goto done;
     }
 
-    /*
-
-    hr = mfOutputNode->GetInputPrefType(0, &mfMediaType);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = mfMediaType->GetMajorType(&guidMajorType);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = mfOutputNode->GetObject(&pSinkUnk);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-*/
-    /*
-    hr = pSinkUnk->QueryInterface(IID_IMFStreamSink, (void**)&pStreamSink);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    */
 
     pStreamSink = mediaSink->GetMFStreamSinkByIndex(index);
 
@@ -349,39 +319,6 @@ done:
 
 
 
-// Add an output node to a topology.
-IMFTopologyNode* Topology::AddOutputNode(MediaSink* mediaSink,  DWORD dwId)
-{
-  IMFTopologyNode *mfTopologyNode = nullptr;
-  HRESULT hr;
-
-  do
-  {
-    // Create the node.
-    if (!SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &mfTopologyNode)))
-      break;
-
-    // Set the object pointer.
-    if (!SUCCEEDED(hr = mfTopologyNode->SetObject(mediaSink->GetMFStreamSinkByIndex(0))))
-      break;
-
-    // Set the stream sink ID attribute.
-    if (!SUCCEEDED(hr = mfTopologyNode->SetUINT32(MF_TOPONODE_STREAMID, dwId)))
-      break;
-
-    if (!SUCCEEDED(hr = mfTopologyNode->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE)))
-      break;
-
-    // Add the node to the topology.
-    if (!SUCCEEDED(hr = _mfTopology->AddNode(mfTopologyNode)))
-      break;
-  } while (0);
-
-  if (FAILED(hr))
-    throw std::exception("Unable to create topology output node");
-
-  return mfTopologyNode;
-}
 
 
 
@@ -405,7 +342,7 @@ HRESULT Topology::AddTransformOutputNodes(
 )
 {
   IMFTopologyNode* pEncNode = nullptr;
-  IMFTopologyNode* pOutputNode = nullptr;
+//  IMFTopologyNode* pOutputNode = nullptr;
   IMFASFContentInfo* pContentInfo = nullptr;
   IMFASFProfile* pProfile = nullptr;
   IMFASFStreamConfig* pStream = nullptr;
@@ -428,16 +365,7 @@ HRESULT Topology::AddTransformOutputNodes(
     goto done;
   }
 
-  //Activate the sink
-
-// trying this at sink creation time  mediaSink->Activate();
-/*
-  hr = pSinkActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&mfMediaSink);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-*/
+  
   //find the media type in the sink
   //Get content info from the sink
 
@@ -479,27 +407,12 @@ HRESULT Topology::AddTransformOutputNodes(
     {
       goto done;
     }
-    /*
-    if (guidMT != guidMajor)
-    {
-      pStream->Release();
-      pMediaType->Release();
-      guidMT = GUID_NULL;
-
-      continue;
-    }
-    */
+    
     //We need to activate the encoder
 
     encoderConfigurationProperties = mediaSink->GetEncoderConfigurationPropertyStore(wStreamNumber);
 
-/*
-    hr = pContentInfo->GetEncodingConfigurationPropertyStore(wStreamNumber, &pProps);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    */
+
 
     if (guidMT == MFMediaType_Audio)
     {
@@ -528,11 +441,17 @@ HRESULT Topology::AddTransformOutputNodes(
     goto done;
   }
 
+  IMFTopologyNode* mfOutputNode = nullptr;
+
+  mfOutputNode = mediaSink->CreateTopologyOutputNode(2);
+
+  hr = _mfTopology->AddNode(mfOutputNode);
+
   //Add the output node to this node.
-  pOutputNode = AddOutputNode(mediaSink, wStreamNumber);
+// bam  pOutputNode = AddOutputNode(mediaSink, wStreamNumber);
 
   //now we have the output node, connect it to the transform node
-  hr = pEncNode->ConnectOutput(0, pOutputNode, 0);
+  hr = pEncNode->ConnectOutput(0, mfOutputNode, 0);
   if (FAILED(hr))
   {
     goto done;
@@ -545,14 +464,13 @@ HRESULT Topology::AddTransformOutputNodes(
 
 done:
   pEncNode->Release();
-  pOutputNode->Release();
+//  pOutputNode->Release();
   pEncoderActivate->Release();
   pMediaType->Release();
   encoderConfigurationProperties->Release();
   pStream->Release();
   pProfile->Release();
   pContentInfo->Release();
-//  mfMediaSink->Release();
 
   return hr;
 }

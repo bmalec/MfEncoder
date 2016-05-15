@@ -63,3 +63,54 @@ IPropertyStore* MediaSink::GetEncoderConfigurationPropertyStore(WORD streamNumbe
 
 }
 
+
+IMFTopologyNode* MediaSink::CreateTopologyOutputNode(WORD streamNumber)
+{
+  IMFTopologyNode* mfTopologyNode = nullptr;
+  IMFStreamSink* mfStreamSink = nullptr;
+  HRESULT hr;
+
+  do
+  {
+    // Get the stream sink based on the supplied streamNumber
+
+    if (!SUCCEEDED(hr = _mfMediaSink->GetStreamSinkById(streamNumber, &mfStreamSink)))
+      break;
+
+    // Create the node.
+    if (!SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &mfTopologyNode)))
+      break;
+
+    // Set the object pointer.
+    if (!SUCCEEDED(hr = mfTopologyNode->SetObject(mfStreamSink)))
+      break;
+
+    /* Doesn't seem like the following is needed?  I set it to arandom stream number, didn't appear to change anything
+
+    // Set the stream sink ID attribute.
+    if (!SUCCEEDED(hr = mfTopologyNode->SetUINT32(MF_TOPONODE_STREAMID, streamNumber)))
+      break;
+    */
+
+    if (!SUCCEEDED(hr = mfTopologyNode->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE)))
+      break;
+  } while (0);
+
+  if (FAILED(hr))
+    throw std::exception("Unable to create topology output node");
+    
+  return mfTopologyNode;
+
+}
+
+
+
+
+
+IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
+{
+  return nullptr;
+
+}
+
+

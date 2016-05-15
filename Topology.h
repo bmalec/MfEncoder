@@ -18,7 +18,7 @@ private:
   );
 
 
-  IMFTopologyNode* AddOutputNode(MediaSink* mediaSink, DWORD dwId);
+//   IMFTopologyNode* AddOutputNode(MediaSink* mediaSink, DWORD dwId);
 
 
   void _buildPartialTopograpy(MediaSource* source, MediaSink* sink);

@@ -97,24 +97,6 @@ MediaSource::~MediaSource()
   }
 }
 
-/*
-DWORD MediaSource::GetStreamDescriptorCount()
-{
-  return _streamDescriptorCount;
-}
-*/
-
-/*
-GUID MediaSource::GetMajorType()
-{
-  GUID majorType = GUID_NULL;
-  StreamDescriptor* streamDescriptor = GetStreamDescriptorByIndex(0);
-  majorType = streamDescriptor->GetMajorType();
-  delete streamDescriptor;
-
-  return majorType;
-}
-*/
 
 
 MediaSource* MediaSource::Open(const wchar_t *url)
@@ -152,17 +134,6 @@ IMFMediaSource* MediaSource::GetMFMediaSource()
   return _mfMediaSource;
 }
 
-/*
-StreamDescriptor* MediaSource::GetStreamDescriptorByIndex(DWORD index)
-{
-  IMFStreamDescriptor* mfStreamDescriptor = nullptr;
-  BOOL isSelected = FALSE;
-
-  HRESULT hr = _mfPresentationDescriptor->GetStreamDescriptorByIndex(index, &isSelected, &mfStreamDescriptor);
-
-  return new StreamDescriptor(mfStreamDescriptor, isSelected);
-}
-*/
 
 wchar_t* MediaSource::GetMetadataValue(wchar_t *metadataKey)
 {

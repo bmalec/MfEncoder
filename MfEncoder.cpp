@@ -228,7 +228,7 @@ int wmain(int argc, wchar_t *argv[])
         }
 
         MediaSinkContentInfo *contentInfo = new MediaSinkContentInfo();
-        contentInfo->AddStreamSink(1, encoderParameters);
+        contentInfo->AddStreamSink(2, encoderParameters);
         SetMediaSinkContentInfoMetadata(contentInfo, mediaSource, &parameters);
 
         MediaSink* mediaSink = MediaSink::Create(outputFilename, contentInfo);

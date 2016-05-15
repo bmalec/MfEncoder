@@ -1,7 +1,6 @@
 #pragma once
 
 #include <mfidl.h>
-#include "StreamDescriptor.h"
 
 class MediaSource
 {
@@ -16,7 +15,6 @@ private:
   IMFMediaSource* _mfMediaSource;
   IMFPresentationDescriptor* _mfPresentationDescriptor;
   MetadataKeyValuePair *_metadata;
-//  DWORD _streamDescriptorCount;
   ULONG _metadataPropertyCount;
 
   void LoadMetadataFromSource();
@@ -29,9 +27,6 @@ public:
   ~MediaSource();
 
   IMFPresentationDescriptor* GetPresentationDescriptor();
-  //DWORD GetStreamDescriptorCount();
-//  GUID GetMajorType();
-//  StreamDescriptor* GetStreamDescriptorByIndex(DWORD index);
 
   IMFTopologyNode* CreateTopologySourceNode();
 
