@@ -2,14 +2,12 @@
 
 #include <mfidl.h>
 #include <wmcontainer.h>
-//#include "MediaSinkContentInfo.h"
 
 class MediaSink
 {
 private:
   IMFMediaSink* _mfMediaSink;
   IMFASFContentInfo* _mfAsfContentInfo;
-//  AsfContentInfoBuilder* _mediaSinkContentInfo;
 
 protected:
   MediaSink(IMFMediaSink* mediaSink, IMFASFContentInfo* asfContentInfo);

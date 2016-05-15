@@ -182,7 +182,6 @@ HRESULT Topology::Encode(Parameters* parameters)
 
   IMFMediaSession *mfMediaSession = nullptr;
   IMFMediaEvent* pEvent = nullptr;
-//  IMFTopology* pFullTopology = nullptr;
 
 
   MediaEventType meType = MEUnknown;  // Event type
@@ -312,7 +311,6 @@ HRESULT Topology::Encode(Parameters* parameters)
 done:
   pEvent->Release();
   if (mfMediaSession) mfMediaSession->Release();
-//  pFullTopology->Release();
   return hr;
 }
 
@@ -321,170 +319,14 @@ done:
 
 
 
-/*
-
-//-------------------------------------------------------------------
-//  AddTransformOutputNodes
-//  Creates and adds the sink node to the encoding topology.
-//  Creates and adds the required encoder activates.
-
-//  pTopology:  A pointer to the topology.
-//  pSinkActivate:  A pointer to the file sink's activation object.
-//  pSourceType: A pointer to the source stream's media type.
-//  ppNode:  Receives a pointer to the topology node.
-//-------------------------------------------------------------------
-
-HRESULT Topology::AddTransformOutputNodes(
-  MediaSink* mediaSink,
-//  IMFActivate* pSinkActivate,
-//  GUID guidMajor,
-  IMFTopologyNode **ppNode    // Receives the node pointer.
-)
-{
-  IMFTopologyNode* pEncNode = nullptr;
-//  IMFTopologyNode* pOutputNode = nullptr;
-  IMFASFContentInfo* pContentInfo = nullptr;
-  IMFASFProfile* pProfile = nullptr;
-  IMFASFStreamConfig* pStream = nullptr;
-  IMFMediaType* pMediaType = nullptr;
-  IPropertyStore* encoderConfigurationProperties = nullptr;
-  IMFActivate *pEncoderActivate = nullptr;
-  IMFMediaSink* mfMediaSink = nullptr;
-
-  GUID guidMT = GUID_NULL;
-
-  DWORD cStreams = 0;
-  WORD wStreamNumber = 0;
-
-  HRESULT hr = S_OK;
-
-  // Create the node.
-  hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &pEncNode);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  
-  //find the media type in the sink
-  //Get content info from the sink
-
-  mfMediaSink = mediaSink->GetMFMediaSink();
-
-  hr = mfMediaSink->QueryInterface(__uuidof(IMFASFContentInfo), (void**)&pContentInfo);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-
-  hr = pContentInfo->GetProfile(&pProfile);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  hr = pProfile->GetStreamCount(&cStreams);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  for (DWORD index = 0; index < cStreams; index++)
-  {
-    hr = pProfile->GetStream(index, &wStreamNumber, &pStream);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    hr = pStream->GetMediaType(&pMediaType);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    hr = pMediaType->GetMajorType(&guidMT);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    
-    //We need to activate the encoder
-
-    encoderConfigurationProperties = mediaSink->GetEncoderConfigurationPropertyStore(wStreamNumber);
-
-
-
-    if (guidMT == MFMediaType_Audio)
-    {
-      hr = MFCreateWMAEncoderActivate(pMediaType, encoderConfigurationProperties, &pEncoderActivate);
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      wprintf_s(L"Audio Encoder created. Stream Number: %d .\n", wStreamNumber);
-
-      break;
-    }
-  }
-
-  // Set the object pointer.
-  hr = pEncNode->SetObject(pEncoderActivate);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  // Add the node to the topology.
-  hr = _mfTopology->AddNode(pEncNode);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  IMFTopologyNode* mfOutputNode = nullptr;
-
-  mfOutputNode = mediaSink->CreateTopologyOutputNode(2);
-
-  hr = _mfTopology->AddNode(mfOutputNode);
-
-  //Add the output node to this node.
-// bam  pOutputNode = AddOutputNode(mediaSink, wStreamNumber);
-
-  //now we have the output node, connect it to the transform node
-  hr = pEncNode->ConnectOutput(0, mfOutputNode, 0);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  // Return the pointer to the caller.
-  *ppNode = pEncNode;
-  (*ppNode)->AddRef();
-
-
-done:
-  pEncNode->Release();
-//  pOutputNode->Release();
-  pEncoderActivate->Release();
-  pMediaType->Release();
-  encoderConfigurationProperties->Release();
-  pStream->Release();
-  pProfile->Release();
-  pContentInfo->Release();
-
-  return hr;
-}
-*/
-
-
-Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* mediaSink)
+Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* mediaSink, WORD streamNumber)
 {
   IMFTopology* mfTopology = nullptr;
   //Create the topology that represents the encoding pipeline
   HRESULT hr = MFCreateTopology(&mfTopology);
 
   Topology* topology = new Topology(mfTopology, mediaSink);
-  topology->_buildPartialTopograpy(source, mediaSink);
+  topology->_buildPartialTopograpy(source, mediaSink, streamNumber);
 
   return topology;
 }
@@ -492,64 +334,51 @@ Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* media
 
 
 
-void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
+void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink, WORD streamNumber)
 {
-  IMFTopologyNode* pEncoderNode = nullptr;
-  IMFTopologyNode* mfTopologySourceNode = nullptr;
-  IMFTopologyNode* topologyOutputNode = nullptr;
+  IMFTopologyNode* encoderNode = nullptr;
+  IMFTopologyNode* sourceNode = nullptr;
+  IMFTopologyNode* outputNode = nullptr;
 
   HRESULT hr = S_OK;
 
-  // Add source node
+  do {
 
-  mfTopologySourceNode = source->CreateTopologySourceNode();
-  _mfTopology->AddNode(mfTopologySourceNode);
+    // Add source node
 
-  // Add encoder node
+    sourceNode = source->CreateTopologySourceNode();
+    if (!SUCCEEDED(hr = _mfTopology->AddNode(sourceNode)))
+      break;
 
-  pEncoderNode = sink->CreateTopologyTransformNode(2);
-  _mfTopology->AddNode(pEncoderNode);
+    // Add encoder node
 
-  // tie the source node to the encoder
+    encoderNode = sink->CreateTopologyTransformNode(1);
+    
+    if (!SUCCEEDED(hr = _mfTopology->AddNode(encoderNode)))
+      break;
 
-  mfTopologySourceNode->ConnectOutput(0, pEncoderNode, 0);
+    // connect the source node to the encoder
 
-  // Add sink node
+    if (!SUCCEEDED(hr = sourceNode->ConnectOutput(0, encoderNode, 0)))
+      break;
 
-  topologyOutputNode = sink->CreateTopologyOutputNode(2);
-  hr = _mfTopology->AddNode(topologyOutputNode);
+    // Add sink node
 
-  // the transform node to the sink node
+    outputNode = sink->CreateTopologyOutputNode(streamNumber);
+    if (!SUCCEEDED(hr = _mfTopology->AddNode(outputNode)))
+      break;
 
-  hr = pEncoderNode->ConnectOutput(0, topologyOutputNode, 0);
+    // connect the transform node to the output node
 
+    if (!SUCCEEDED(hr = encoderNode->ConnectOutput(0, outputNode, 0)))
+      break;
+  } while (0);
 
-
-
-  
-
-
-/*
-  
-
-
-    hr = AddTransformOutputNodes(sink, &pEncoderNode);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    //now we have the transform node, connect it to the source node
-    hr = mfTopologySourceNode->ConnectOutput(0, pEncoderNode, 0);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
+  if (sourceNode) sourceNode->Release();
+  if (outputNode) outputNode->Release();
+  if (encoderNode) encoderNode->Release();
 
 
-  wprintf_s(L"Partial Topology Built.\n");
-  */
-
-done:
-  pEncoderNode->Release();
+  if (FAILED(hr))
+    throw std::exception("Unable to construct topology");
 }

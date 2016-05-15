@@ -145,14 +145,3 @@ IMFASFContentInfo* AsfContentInfoBuilder::ConstructMfAsfContentInfo()
   return _mfAsfContentInfo;
 }
 
-/*
-IPropertyStore* AsfContentInfoBuilder::GetEncoderConfigurationPropertyStore(WORD streamNumber)
-{
-  IPropertyStore* result;
-
-  if (!SUCCEEDED(_mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &result)))
-    throw std::exception("Unable to retrieve Encoder Configuration Property Store");
-
-  return result;
-}
-*/

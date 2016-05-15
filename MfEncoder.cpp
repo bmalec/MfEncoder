@@ -229,14 +229,14 @@ int wmain(int argc, wchar_t *argv[])
         }
 
         AsfContentInfoBuilder *contentInfo = new AsfContentInfoBuilder();
-        contentInfo->AddStreamSink(2, encoderParameters);
+        contentInfo->AddStreamSink(1, encoderParameters);
         SetMediaSinkContentInfoMetadata(contentInfo, mediaSource, &parameters);
 
         MediaSink* mediaSink = MediaSink::Create(outputFilename, contentInfo->ConstructMfAsfContentInfo());
 
         //Build the encoding topology.
 
-        Topology* topology = Topology::CreatePartialTopograpy(mediaSource, mediaSink);
+        Topology* topology = Topology::CreatePartialTopograpy(mediaSource, mediaSink, 1);
 
         wprintf_s(L"Encoding %s\n", findData.cFileName);
         topology->Encode(&parameters);
