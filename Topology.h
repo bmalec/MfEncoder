@@ -12,10 +12,10 @@ private:
   MediaSink* _mediaSink;
 
 
-  HRESULT Topology::AddTransformOutputNodes(
-    MediaSink* mediaSink,
-    IMFTopologyNode **ppNode    // Receives the node pointer.
-  );
+//  HRESULT Topology::AddTransformOutputNodes(
+//    MediaSink* mediaSink,
+//    IMFTopologyNode **ppNode    // Receives the node pointer.
+  //);
 
 
 //   IMFTopologyNode* AddOutputNode(MediaSink* mediaSink, DWORD dwId);

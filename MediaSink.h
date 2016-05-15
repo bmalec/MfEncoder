@@ -12,6 +12,8 @@ private:
 protected:
   MediaSink(IMFMediaSink* mediaSink, MediaSinkContentInfo* mediaSinkContentInfo);
 
+  IMFMediaType* GetMediaTypeForStream(WORD streamNumber);
+
 public:
   static MediaSink *Create(const wchar_t *url, MediaSinkContentInfo* contentInfo);
 

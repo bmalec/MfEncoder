@@ -321,7 +321,7 @@ done:
 
 
 
-
+/*
 
 //-------------------------------------------------------------------
 //  AddTransformOutputNodes
@@ -474,7 +474,7 @@ done:
 
   return hr;
 }
-
+*/
 
 
 Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* mediaSink)
@@ -495,15 +495,42 @@ Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* media
 void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
 {
   IMFTopologyNode* pEncoderNode = nullptr;
+  IMFTopologyNode* mfTopologySourceNode = nullptr;
+  IMFTopologyNode* topologyOutputNode = nullptr;
+
   HRESULT hr = S_OK;
 
   // Add source node
 
-  IMFTopologyNode* mfTopologySourceNode = nullptr;
-
   mfTopologySourceNode = source->CreateTopologySourceNode();
-
   _mfTopology->AddNode(mfTopologySourceNode);
+
+  // Add encoder node
+
+  pEncoderNode = sink->CreateTopologyTransformNode(2);
+  _mfTopology->AddNode(pEncoderNode);
+
+  // tie the source node to the encoder
+
+  mfTopologySourceNode->ConnectOutput(0, pEncoderNode, 0);
+
+  // Add sink node
+
+  topologyOutputNode = sink->CreateTopologyOutputNode(2);
+  hr = _mfTopology->AddNode(topologyOutputNode);
+
+  // the transform node to the sink node
+
+  hr = pEncoderNode->ConnectOutput(0, topologyOutputNode, 0);
+
+
+
+
+  
+
+
+/*
+  
 
 
     hr = AddTransformOutputNodes(sink, &pEncoderNode);
@@ -521,6 +548,7 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink)
 
 
   wprintf_s(L"Partial Topology Built.\n");
+  */
 
 done:
   pEncoderNode->Release();

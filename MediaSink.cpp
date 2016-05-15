@@ -45,11 +45,13 @@ MediaSink* MediaSink::Create(const wchar_t *url, MediaSinkContentInfo* contentIn
   //Create the activation object for the  file sink
   HRESULT hr = MFCreateASFMediaSinkActivate(url, mfAsfContentInfo, &mfActivate);
 
+  // Immediately activate the media sink as there's no real reason not to
+
   if (!SUCCEEDED(hr = mfActivate->ActivateObject(__uuidof(IMFMediaSink), (void**)&mfMediaSink)))
     throw std::exception("Could not activate MediaSink");
 
   mfActivate->Release();
-  mfAsfContentInfo->Release();
+// think I should not be releasing this  mfAsfContentInfo->Release();
 
   return new MediaSink(mfMediaSink, contentInfo);
 
@@ -104,12 +106,75 @@ IMFTopologyNode* MediaSink::CreateTopologyOutputNode(WORD streamNumber)
 }
 
 
+IMFMediaType* MediaSink::GetMediaTypeForStream(WORD streamNumber)
+{
+  IMFASFStreamConfig *asfStreamConfig = nullptr;
+  IMFASFProfile* mfAsfProfile;
+  IMFStreamSink* mfStreamSink = nullptr;
+  IMFMediaType* mfMediaType = nullptr;
+  HRESULT hr;
+
+  IMFASFContentInfo* mfAsfContentInfo = _mediaSinkContentInfo->GetMfAsfContentInfoObject();
+
+  do
+  {
+    if (!SUCCEEDED(hr = mfAsfContentInfo->GetProfile(&mfAsfProfile)))
+      break;
+
+    if (!SUCCEEDED(hr = mfAsfProfile->GetStreamByNumber(streamNumber, &asfStreamConfig)))
+      break;
+
+    if (!SUCCEEDED(hr = asfStreamConfig->GetMediaType(&mfMediaType)))
+      break;
+
+  } while (0);
+
+  return mfMediaType;
+}
+
+
+
+
 
 
 
 IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
 {
-  return nullptr;
+  IMFTopologyNode* topologyTransformNode = nullptr;
+  IMFASFStreamConfig *asfStreamConfig = nullptr;
+  IMFASFProfile* mfAsfProfile;
+  IMFStreamSink* mfStreamSink = nullptr;
+  IMFMediaType* streamMediaType = nullptr;
+  IPropertyStore* encodingConfigurationProperties = nullptr;
+  IMFActivate* encoderActivationObj = nullptr;
+  HRESULT hr;
+    
+  do
+  {
+    // Need to get the mediatype for the output stream in order to instatiated the 
+    // encoder.  My first inclination was to get the stream sink like we did in 
+    // CreateTopologyOutputNode, and that could work, but... we also need to
+    // get the encoder configuration parameters, which are tacked on to the 
+    // IMFMediaSinkContentInfo object.  Uggh.  The Microsoft example does a 
+    // little bit of both in order to maximize confusion...
+
+    streamMediaType = GetMediaTypeForStream(streamNumber);
+
+    IMFASFContentInfo* mfAsfContentInfo = _mediaSinkContentInfo->GetMfAsfContentInfoObject();
+
+    hr = mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &encodingConfigurationProperties);
+
+    hr = MFCreateWMAEncoderActivate(streamMediaType, encodingConfigurationProperties, &encoderActivationObj);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &topologyTransformNode);
+
+    // Set the object pointer.
+    hr = topologyTransformNode->SetObject(encoderActivationObj);
+
+
+  } while (0);
+
+  return topologyTransformNode;
 
 }
 
