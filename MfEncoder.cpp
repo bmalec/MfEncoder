@@ -11,7 +11,7 @@
 #include "MediaSink.h"
 #include "Topology.h"
 #include "AudioEncoder.h"
-#include "MediaSinkContentInfo.h"
+#include "AsfContentInfoBuilder.h"
 
 
 static void SetMediaSinkContentInfoMetadata(AsfContentInfoBuilder* contentInfo, MediaSource* mediaSource, Parameters* commandLineParameters)

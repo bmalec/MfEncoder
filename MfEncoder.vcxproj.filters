@@ -48,7 +48,7 @@
     <ClInclude Include="PropertyStore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MediaSinkContentInfo.h">
+    <ClInclude Include="AsfContentInfoBuilder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -80,7 +80,7 @@
     <ClCompile Include="PropertyStore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MediaSinkContentInfo.cpp">
+    <ClCompile Include="AsfContentInfoBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

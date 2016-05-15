@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <propvarutil.h>
 #include <stdexcept>
-#include "MediaSinkContentInfo.h"
+#include "AsfContentInfoBuilder.h"
 
 
 AsfContentInfoBuilder::AsfContentInfoBuilder()
