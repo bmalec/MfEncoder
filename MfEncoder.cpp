@@ -11,9 +11,10 @@
 #include "MediaSink.h"
 #include "Topology.h"
 #include "AudioEncoder.h"
+#include "MediaSinkContentInfo.h"
 
 
-static void SetMediaSinkContentInfoMetadata(MediaSinkContentInfo* contentInfo, MediaSource* mediaSource, Parameters* commandLineParameters)
+static void SetMediaSinkContentInfoMetadata(AsfContentInfoBuilder* contentInfo, MediaSource* mediaSource, Parameters* commandLineParameters)
 {
   // please work
 
@@ -227,11 +228,11 @@ int wmain(int argc, wchar_t *argv[])
           wcscpy(outputFilename, parameters.OutputFilename);
         }
 
-        MediaSinkContentInfo *contentInfo = new MediaSinkContentInfo();
+        AsfContentInfoBuilder *contentInfo = new AsfContentInfoBuilder();
         contentInfo->AddStreamSink(2, encoderParameters);
         SetMediaSinkContentInfoMetadata(contentInfo, mediaSource, &parameters);
 
-        MediaSink* mediaSink = MediaSink::Create(outputFilename, contentInfo);
+        MediaSink* mediaSink = MediaSink::Create(outputFilename, contentInfo->ConstructMfAsfContentInfo());
 
         //Build the encoding topology.
 

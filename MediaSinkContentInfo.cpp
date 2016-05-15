@@ -5,7 +5,7 @@
 #include "MediaSinkContentInfo.h"
 
 
-MediaSinkContentInfo::MediaSinkContentInfo()
+AsfContentInfoBuilder::AsfContentInfoBuilder()
 {
   IPropertyStore* fileLevelEncodingConfiguration = nullptr;
   HRESULT hr;
@@ -65,7 +65,7 @@ MediaSinkContentInfo::MediaSinkContentInfo()
 
 
 
-MediaSinkContentInfo::~MediaSinkContentInfo()
+AsfContentInfoBuilder::~AsfContentInfoBuilder()
 {
   _mfMetadata->Release();
   _mfMetadataProvider->Release();
@@ -75,7 +75,7 @@ MediaSinkContentInfo::~MediaSinkContentInfo()
 
 
 
-void MediaSinkContentInfo::AddStreamSink(WORD streamNumber, AudioEncoderParameters* encoderParameters)
+void AsfContentInfoBuilder::AddStreamSink(WORD streamNumber, AudioEncoderParameters* encoderParameters)
 {
   HRESULT hr;
 
@@ -128,7 +128,7 @@ void MediaSinkContentInfo::AddStreamSink(WORD streamNumber, AudioEncoderParamete
     throw std::exception("Unable to add stream to the MediaSink");
 }
 
-void MediaSinkContentInfo::SetMetadataAsString(LPWSTR field, LPWSTR value)
+void AsfContentInfoBuilder::SetMetadataAsString(LPWSTR field, LPWSTR value)
 {
   PROPVARIANT pv;
 
@@ -139,14 +139,14 @@ void MediaSinkContentInfo::SetMetadataAsString(LPWSTR field, LPWSTR value)
 
 
 
-IMFASFContentInfo* MediaSinkContentInfo::GetMfAsfContentInfoObject()
+IMFASFContentInfo* AsfContentInfoBuilder::ConstructMfAsfContentInfo()
 {
   _mfAsfContentInfo->SetProfile(_mfAsfProfile);
   return _mfAsfContentInfo;
 }
 
-
-IPropertyStore* MediaSinkContentInfo::GetEncoderConfigurationPropertyStore(WORD streamNumber)
+/*
+IPropertyStore* AsfContentInfoBuilder::GetEncoderConfigurationPropertyStore(WORD streamNumber)
 {
   IPropertyStore* result;
 
@@ -155,3 +155,4 @@ IPropertyStore* MediaSinkContentInfo::GetEncoderConfigurationPropertyStore(WORD 
 
   return result;
 }
+*/

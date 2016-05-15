@@ -4,10 +4,10 @@
 
 
 
-MediaSink::MediaSink(IMFMediaSink *mfMediaSink, MediaSinkContentInfo* mediaSinkContentInfo)
+MediaSink::MediaSink(IMFMediaSink *mfMediaSink, IMFASFContentInfo* asfContentInfo)
 {
   _mfMediaSink = mfMediaSink;
-  _mediaSinkContentInfo = mediaSinkContentInfo;
+  _mfAsfContentInfo = asfContentInfo;
 }
 
 
@@ -35,15 +35,13 @@ IMFStreamSink* MediaSink::GetMFStreamSinkByIndex(DWORD index)
   return mfStreamSink;
 }
 
-MediaSink* MediaSink::Create(const wchar_t *url, MediaSinkContentInfo* contentInfo)
+MediaSink* MediaSink::Create(const wchar_t *url, IMFASFContentInfo* afsContentInfo)
 {
-  IMFASFContentInfo* mfAsfContentInfo = contentInfo->GetMfAsfContentInfoObject();
-
   IMFActivate* mfActivate = nullptr;
   IMFMediaSink* mfMediaSink = nullptr;
 
   //Create the activation object for the  file sink
-  HRESULT hr = MFCreateASFMediaSinkActivate(url, mfAsfContentInfo, &mfActivate);
+  HRESULT hr = MFCreateASFMediaSinkActivate(url, afsContentInfo, &mfActivate);
 
   // Immediately activate the media sink as there's no real reason not to
 
@@ -53,17 +51,19 @@ MediaSink* MediaSink::Create(const wchar_t *url, MediaSinkContentInfo* contentIn
   mfActivate->Release();
 // think I should not be releasing this  mfAsfContentInfo->Release();
 
-  return new MediaSink(mfMediaSink, contentInfo);
+  return new MediaSink(mfMediaSink, afsContentInfo);
 
 }
 
-
+/*
 
 IPropertyStore* MediaSink::GetEncoderConfigurationPropertyStore(WORD streamNumber)
 {
   return _mediaSinkContentInfo->GetEncoderConfigurationPropertyStore(streamNumber);
 
 }
+
+*/
 
 
 IMFTopologyNode* MediaSink::CreateTopologyOutputNode(WORD streamNumber)
@@ -114,11 +114,9 @@ IMFMediaType* MediaSink::GetMediaTypeForStream(WORD streamNumber)
   IMFMediaType* mfMediaType = nullptr;
   HRESULT hr;
 
-  IMFASFContentInfo* mfAsfContentInfo = _mediaSinkContentInfo->GetMfAsfContentInfoObject();
-
   do
   {
-    if (!SUCCEEDED(hr = mfAsfContentInfo->GetProfile(&mfAsfProfile)))
+    if (!SUCCEEDED(hr = _mfAsfContentInfo->GetProfile(&mfAsfProfile)))
       break;
 
     if (!SUCCEEDED(hr = mfAsfProfile->GetStreamByNumber(streamNumber, &asfStreamConfig)))
@@ -142,7 +140,6 @@ IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
 {
   IMFTopologyNode* topologyTransformNode = nullptr;
   IMFASFStreamConfig *asfStreamConfig = nullptr;
-  IMFASFProfile* mfAsfProfile;
   IMFStreamSink* mfStreamSink = nullptr;
   IMFMediaType* streamMediaType = nullptr;
   IPropertyStore* encodingConfigurationProperties = nullptr;
@@ -160,9 +157,9 @@ IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
 
     streamMediaType = GetMediaTypeForStream(streamNumber);
 
-    IMFASFContentInfo* mfAsfContentInfo = _mediaSinkContentInfo->GetMfAsfContentInfoObject();
+//    IMFASFContentInfo* mfAsfContentInfo = _mediaSinkContentInfo->ConstructMfAsfContentInfo();
 
-    hr = mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &encodingConfigurationProperties);
+    hr = _mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &encodingConfigurationProperties);
 
     hr = MFCreateWMAEncoderActivate(streamMediaType, encodingConfigurationProperties, &encoderActivationObj);
 

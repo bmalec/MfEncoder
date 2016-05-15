@@ -1,21 +1,23 @@
 #pragma once
 
 #include <mfidl.h>
-#include "MediaSinkContentInfo.h"
+#include <wmcontainer.h>
+//#include "MediaSinkContentInfo.h"
 
 class MediaSink
 {
 private:
   IMFMediaSink* _mfMediaSink;
-  MediaSinkContentInfo* _mediaSinkContentInfo;
+  IMFASFContentInfo* _mfAsfContentInfo;
+//  AsfContentInfoBuilder* _mediaSinkContentInfo;
 
 protected:
-  MediaSink(IMFMediaSink* mediaSink, MediaSinkContentInfo* mediaSinkContentInfo);
+  MediaSink(IMFMediaSink* mediaSink, IMFASFContentInfo* asfContentInfo);
 
   IMFMediaType* GetMediaTypeForStream(WORD streamNumber);
 
 public:
-  static MediaSink *Create(const wchar_t *url, MediaSinkContentInfo* contentInfo);
+  static MediaSink *Create(const wchar_t *url, IMFASFContentInfo* asfContentInfo);
 
   ~MediaSink();
 

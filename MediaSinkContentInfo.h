@@ -3,17 +3,17 @@
 #include <wmcontainer.h>
 #include "AudioEncoder.h"
 
-class MediaSinkContentInfo
+class AsfContentInfoBuilder
 {
 public:
-  MediaSinkContentInfo();
-  ~MediaSinkContentInfo();
+  AsfContentInfoBuilder();
+  ~AsfContentInfoBuilder();
 
   void AddStreamSink(WORD streamNumber, AudioEncoderParameters* encoderParameters);
   void SetMetadataAsString(LPWSTR field, LPWSTR value);
-  IMFASFContentInfo* GetMfAsfContentInfoObject();
+  IMFASFContentInfo* ConstructMfAsfContentInfo();
 
-  IPropertyStore* GetEncoderConfigurationPropertyStore(WORD streamNumber);
+//  IPropertyStore* GetEncoderConfigurationPropertyStore(WORD streamNumber);
 
 private:
   IMFASFContentInfo* _mfAsfContentInfo;
