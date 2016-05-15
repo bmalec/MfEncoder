@@ -13,7 +13,7 @@ public:
   ~StreamDescriptor();
 
   BOOL GetIsSelected();
-  GUID GetMajorType();
+//  GUID GetMajorType();
 
   IMFStreamDescriptor* GetMfStreamDescriptor();
 };

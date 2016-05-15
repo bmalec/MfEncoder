@@ -103,6 +103,7 @@ DWORD MediaSource::GetStreamDescriptorCount()
   return _streamDescriptorCount;
 }
 
+/*
 GUID MediaSource::GetMajorType()
 {
   GUID majorType = GUID_NULL;
@@ -112,7 +113,7 @@ GUID MediaSource::GetMajorType()
 
   return majorType;
 }
-
+*/
 
 
 MediaSource* MediaSource::Open(const wchar_t *url)
@@ -176,4 +177,65 @@ wchar_t* MediaSource::GetMetadataValue(wchar_t *metadataKey)
   }
 
   return result;
+}
+
+
+
+IMFTopologyNode* MediaSource::CreateTopologySourceNode()
+{
+  IMFTopologyNode* mfTopologyNode = nullptr;
+  IMFStreamDescriptor* mfStreamDescriptor = nullptr;
+  HRESULT hr;
+  DWORD streamDescriptorCount;
+  BOOL isSelected;
+
+  do
+  {
+    if (!SUCCEEDED(hr = _mfPresentationDescriptor->GetStreamDescriptorCount(&streamDescriptorCount)))
+      break;
+
+    for (DWORD i = 0; i < streamDescriptorCount; i++)
+    {
+      if (!SUCCEEDED(hr = _mfPresentationDescriptor->GetStreamDescriptorByIndex(i, &isSelected, &mfStreamDescriptor)))
+        break;
+
+      if (isSelected)
+      {
+        break;
+      }
+      else
+      {
+        mfStreamDescriptor->Release();
+        mfStreamDescriptor = nullptr;
+      }
+    }
+
+    if (FAILED(hr) || !mfStreamDescriptor)
+    {
+      throw std::exception("Could not find selected stream in MediaSource");
+    }
+
+    // otherwise, we're in good shape :-)
+
+    if (!SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &mfTopologyNode)))
+      break;
+
+    if (!SUCCEEDED(hr = mfTopologyNode->SetUnknown(MF_TOPONODE_SOURCE, _mfMediaSource)))
+      break;
+
+    if (!SUCCEEDED(hr = mfTopologyNode->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, _mfPresentationDescriptor)))
+      break;
+
+    if (!SUCCEEDED(hr = mfTopologyNode->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, mfStreamDescriptor)))
+      break;
+  } while (0);
+
+  if (FAILED(hr))
+  {
+    throw std::exception("Could not create topology source node");
+  }
+
+  // todo: should mfStreamDescriptor be released here?
+
+  return mfTopologyNode;
 }

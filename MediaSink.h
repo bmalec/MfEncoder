@@ -7,9 +7,10 @@ class MediaSink
 {
 private:
   IMFMediaSink* _mfMediaSink;
+  MediaSinkContentInfo* _mediaSinkContentInfo;
 
 protected:
-  MediaSink(IMFMediaSink* mediaSink);
+  MediaSink(IMFMediaSink* mediaSink, MediaSinkContentInfo* mediaSinkContentInfo);
 
 public:
   static MediaSink *Create(const wchar_t *url, MediaSinkContentInfo* contentInfo);
@@ -18,6 +19,8 @@ public:
 
   IMFMediaSink* GetMFMediaSink();
   IMFStreamSink* GetMFStreamSinkByIndex(DWORD id);
+  IPropertyStore* GetEncoderConfigurationPropertyStore(WORD streamNumber);
+
 
 };
 

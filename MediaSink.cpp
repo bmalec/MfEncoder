@@ -4,9 +4,10 @@
 
 
 
-MediaSink::MediaSink(IMFMediaSink *mfMediaSink)
+MediaSink::MediaSink(IMFMediaSink *mfMediaSink, MediaSinkContentInfo* mediaSinkContentInfo)
 {
   _mfMediaSink = mfMediaSink;
+  _mediaSinkContentInfo = mediaSinkContentInfo;
 }
 
 
@@ -50,10 +51,15 @@ MediaSink* MediaSink::Create(const wchar_t *url, MediaSinkContentInfo* contentIn
   mfActivate->Release();
   mfAsfContentInfo->Release();
 
-  return new MediaSink(mfMediaSink);
+  return new MediaSink(mfMediaSink, contentInfo);
 
 }
 
 
 
+IPropertyStore* MediaSink::GetEncoderConfigurationPropertyStore(WORD streamNumber)
+{
+  return _mediaSinkContentInfo->GetEncoderConfigurationPropertyStore(streamNumber);
+
+}
 

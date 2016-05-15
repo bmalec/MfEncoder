@@ -7,12 +7,15 @@
 
 MediaSinkContentInfo::MediaSinkContentInfo()
 {
+  IPropertyStore* fileLevelEncodingConfiguration = nullptr;
   HRESULT hr;
 
   _mfAsfContentInfo = nullptr;
   _mfAsfProfile = nullptr;
   _mfMetadataProvider = nullptr;
   _mfMetadata = nullptr;
+
+
 
   do
   {
@@ -27,7 +30,24 @@ MediaSinkContentInfo::MediaSinkContentInfo()
 
     if (!SUCCEEDED(hr = _mfMetadataProvider->GetMFMetadata(NULL, 0, 0, &_mfMetadata)))
       break;
+
+    // Set MFPKEY_ASFMEDIASINK_AUTOADJUST_BITRATE to true on the file-level encoding configuration
+    // property store.  Does this actually do anything?  Is it needed?
+
+    if (!SUCCEEDED(hr = _mfAsfContentInfo->GetEncodingConfigurationPropertyStore(0, &fileLevelEncodingConfiguration)))
+      break;
+
+    PROPVARIANT pv;
+    InitPropVariantFromBoolean(TRUE, &pv);
+
+    if (!SUCCEEDED(hr = fileLevelEncodingConfiguration->SetValue(MFPKEY_ASFMEDIASINK_AUTOADJUST_BITRATE, pv)))
+      break;
+
+    PropVariantClear(&pv);
+
   } while (0);
+
+  if (fileLevelEncodingConfiguration) fileLevelEncodingConfiguration->Release();
 
   if (FAILED(hr))
   {
@@ -123,4 +143,15 @@ IMFASFContentInfo* MediaSinkContentInfo::GetMfAsfContentInfoObject()
 {
   _mfAsfContentInfo->SetProfile(_mfAsfProfile);
   return _mfAsfContentInfo;
+}
+
+
+IPropertyStore* MediaSinkContentInfo::GetEncoderConfigurationPropertyStore(WORD streamNumber)
+{
+  IPropertyStore* result;
+
+  if (!SUCCEEDED(_mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &result)))
+    throw std::exception("Unable to retrieve Encoder Configuration Property Store");
+
+  return result;
 }

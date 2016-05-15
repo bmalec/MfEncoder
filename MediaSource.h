@@ -30,8 +30,10 @@ public:
 
   IMFPresentationDescriptor* GetPresentationDescriptor();
   DWORD GetStreamDescriptorCount();
-  GUID GetMajorType();
+//  GUID GetMajorType();
   StreamDescriptor* GetStreamDescriptorByIndex(DWORD index);
+
+  IMFTopologyNode* CreateTopologySourceNode();
 
   IMFMediaSource* GetMFMediaSource();
   wchar_t *GetMetadataValue(wchar_t *metadataKey);

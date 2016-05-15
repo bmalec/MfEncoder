@@ -117,7 +117,16 @@ int wmain(int argc, wchar_t *argv[])
 
   CommandLineParser::Parse(argc, argv, &parameters);
 
-  AudioEncoderParameters* encoderParameters = AudioEncoderParameters::CreateQualityBasedVbrParameters(parameters.Quality, 2, 44100, 16);
+  AudioEncoderParameters* encoderParameters = nullptr;
+
+  if (parameters.Quality == 100)
+  {
+    encoderParameters = AudioEncoderParameters::CreateLosslessEncoderParameters(2, 44100, 16);
+  }
+  else
+  {
+    encoderParameters = AudioEncoderParameters::CreateQualityBasedVbrParameters(parameters.Quality, 2, 44100, 16);
+  }
 
   // Verify that output folder exists, if specified
   // (and add a '\' to it if it doesn't exist)

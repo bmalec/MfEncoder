@@ -20,7 +20,7 @@ BOOL StreamDescriptor::GetIsSelected()
   return _isSelected;
 }
 
-
+/*
 GUID StreamDescriptor::GetMajorType()
 {
   IMFMediaTypeHandler* mfMediaTypeHandler = nullptr;
@@ -36,7 +36,7 @@ GUID StreamDescriptor::GetMajorType()
 
   return result;
 }
-
+*/
 
 IMFStreamDescriptor* StreamDescriptor::GetMfStreamDescriptor()
 {

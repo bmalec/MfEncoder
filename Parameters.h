@@ -28,7 +28,7 @@ public:
     Genre = nullptr;
 
     Bitrate = -1;
-    Quality = 70;
+    Quality = 75;
 
     *InputFilename = '\0';
     *OutputFilename = '\0';

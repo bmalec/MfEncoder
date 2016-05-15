@@ -24,6 +24,12 @@ AudioEncoderParameters* AudioEncoderParameters::CreateQualityBasedVbrParameters(
 }
 
 
+AudioEncoderParameters* AudioEncoderParameters::CreateLosslessEncoderParameters(int channelCount, int samplesPerSecond, int bitsPerSample)
+{
+  return new AudioEncoderParameters(CompressionFamily::Lossless, 100, channelCount, samplesPerSecond, bitsPerSample);
+}
+
+
 BOOL AudioEncoderParameters::IsLossless()
 {
   return _compressionFamily == CompressionFamily::Lossless;
@@ -32,7 +38,7 @@ BOOL AudioEncoderParameters::IsLossless()
 
 BOOL AudioEncoderParameters::IsQualityBasedVbr()
 {
-  return _compressionFamily == CompressionFamily::QualityBasedVariableBitRate;
+  return (_compressionFamily == CompressionFamily::QualityBasedVariableBitRate) || (_compressionFamily == CompressionFamily::Lossless); 
 }
 
 
