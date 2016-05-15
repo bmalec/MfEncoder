@@ -11,12 +11,9 @@ private:
   IMFTopology* _mfTopology;
   MediaSink* _mediaSink;
 
-//  IMFTopologyNode* AddSourceNode(MediaSource* source, IMFStreamDescriptor *pSD);
 
   HRESULT Topology::AddTransformOutputNodes(
     MediaSink* mediaSink,
-//    IMFActivate* pSinkActivate,
-//    GUID guidMajor,
     IMFTopologyNode **ppNode    // Receives the node pointer.
   );
 

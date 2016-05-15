@@ -2,18 +2,17 @@
 
 #include <mfidl.h>
 
-class StreamDescriptor
+class _StreamDescriptor
 {
 private:
   IMFStreamDescriptor* _mfStreamDescriptor;
   BOOL _isSelected;
     
 public:
-  StreamDescriptor(IMFStreamDescriptor *mfStreamDescriptor, BOOL isSelected);
-  ~StreamDescriptor();
+  _StreamDescriptor(IMFStreamDescriptor *mfStreamDescriptor, BOOL isSelected);
+  ~_StreamDescriptor();
 
-  BOOL GetIsSelected();
-//  GUID GetMajorType();
+//   BOOL GetIsSelected();
 
   IMFStreamDescriptor* GetMfStreamDescriptor();
 };

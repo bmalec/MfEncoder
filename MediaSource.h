@@ -16,7 +16,7 @@ private:
   IMFMediaSource* _mfMediaSource;
   IMFPresentationDescriptor* _mfPresentationDescriptor;
   MetadataKeyValuePair *_metadata;
-  DWORD _streamDescriptorCount;
+//  DWORD _streamDescriptorCount;
   ULONG _metadataPropertyCount;
 
   void LoadMetadataFromSource();
@@ -29,9 +29,9 @@ public:
   ~MediaSource();
 
   IMFPresentationDescriptor* GetPresentationDescriptor();
-  DWORD GetStreamDescriptorCount();
+  //DWORD GetStreamDescriptorCount();
 //  GUID GetMajorType();
-  StreamDescriptor* GetStreamDescriptorByIndex(DWORD index);
+//  StreamDescriptor* GetStreamDescriptorByIndex(DWORD index);
 
   IMFTopologyNode* CreateTopologySourceNode();
 

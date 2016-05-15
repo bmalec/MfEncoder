@@ -558,38 +558,6 @@ done:
 }
 
 
-/*
-// Add a source node to a topology.
-IMFTopologyNode* Topology::AddSourceNode(MediaSource* source, IMFStreamDescriptor *mfStreamDescriptor)
-{
-  IMFTopologyNode *pNode = nullptr;
-
-  HRESULT hr;
-
-  do
-  {
-    if (!SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &pNode)))
-      break;
-
-    if (!SUCCEEDED(hr = pNode->SetUnknown(MF_TOPONODE_SOURCE, source->GetMFMediaSource())))
-      break;
-
-    if (!SUCCEEDED(hr = pNode->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, source->GetPresentationDescriptor())))
-      break;
-
-    if (!SUCCEEDED(hr = pNode->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, mfStreamDescriptor)))
-      break;
-
-    if (!SUCCEEDED(hr = _mfTopology->AddNode(pNode)))
-      break;
-  } while (0);
-
-  if (hr != S_OK)
-    throw std::exception("Unable to add source node to topology"); 
-
-  return pNode;
-}
-*/
 
 Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* mediaSink)
 {

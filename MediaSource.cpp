@@ -72,7 +72,7 @@ MediaSource::MediaSource(IMFMediaSource *mfMediaSource)
 {
   _mfMediaSource = mfMediaSource;
   _mfMediaSource->CreatePresentationDescriptor(&_mfPresentationDescriptor);
-  _mfPresentationDescriptor->GetStreamDescriptorCount(&_streamDescriptorCount);
+//  _mfPresentationDescriptor->GetStreamDescriptorCount(&_streamDescriptorCount);
 
   LoadMetadataFromSource();
 }
@@ -97,11 +97,12 @@ MediaSource::~MediaSource()
   }
 }
 
-
+/*
 DWORD MediaSource::GetStreamDescriptorCount()
 {
   return _streamDescriptorCount;
 }
+*/
 
 /*
 GUID MediaSource::GetMajorType()
@@ -151,7 +152,7 @@ IMFMediaSource* MediaSource::GetMFMediaSource()
   return _mfMediaSource;
 }
 
-
+/*
 StreamDescriptor* MediaSource::GetStreamDescriptorByIndex(DWORD index)
 {
   IMFStreamDescriptor* mfStreamDescriptor = nullptr;
@@ -161,7 +162,7 @@ StreamDescriptor* MediaSource::GetStreamDescriptorByIndex(DWORD index)
 
   return new StreamDescriptor(mfStreamDescriptor, isSelected);
 }
-
+*/
 
 wchar_t* MediaSource::GetMetadataValue(wchar_t *metadataKey)
 {
