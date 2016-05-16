@@ -9,7 +9,6 @@
 #include "Parameters.h"
 #include "MediaSource.h"
 #include "MediaSink.h"
-#include "Topology.h"
 #include "AudioEncoder.h"
 #include "AsfContentInfoBuilder.h"
 
@@ -171,8 +170,6 @@ int wmain(int argc, wchar_t *argv[])
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     HRESULT hr = MFStartup(MF_VERSION);
 
-//    IMFMediaType* mfMediaType = AudioEncoder::GetQualityBasedMediaType(parameters.Quality);
-
     // Use the Windows shell API to extract the path component from the input filename
 
     wchar_t srcFileFolder[MAX_PATH];
@@ -234,14 +231,10 @@ int wmain(int argc, wchar_t *argv[])
 
         MediaSink* mediaSink = MediaSink::Create(outputFilename, contentInfo->ConstructMfAsfContentInfo());
 
-        //Build the encoding topology.
-
-        Topology* topology = Topology::CreatePartialTopograpy(mediaSource, mediaSink, 1);
-
         wprintf_s(L"Encoding %s\n", findData.cFileName);
-        topology->Encode(encoderParameters);
 
-        delete topology;
+        AudioEncoder::Encode(mediaSource, mediaSink, encoderParameters);
+
         delete mediaSink;
         delete mediaSource;
 

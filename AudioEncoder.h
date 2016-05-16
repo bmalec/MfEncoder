@@ -1,6 +1,8 @@
 #pragma once
 
 #include <mfidl.h>
+#include "MediaSource.h"
+#include "MediaSink.h"
 
 class AudioEncoderParameters
 {
@@ -35,6 +37,7 @@ class AudioEncoder
 public:
   static IMFMediaType* GetEncoderMediaType(AudioEncoderParameters* encoderParameters);
   static void SetEncoderPropertyStoreValuesForQualityBasedVbr(IPropertyStore* propertyStore, int quality);
+  static void Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioEncoderParameters* encoderParameters);
 
 private:
   IMFActivate* _mfActivate;

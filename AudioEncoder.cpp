@@ -4,6 +4,7 @@
 #include <Mferror.h>
 #include <stdexcept>
 #include "Util.h"
+#include "Topology.h"
 #include "AudioEncoder.h"
 
 
@@ -214,4 +215,12 @@ void AudioEncoder::SetEncoderPropertyStoreValuesForQualityBasedVbr(IPropertyStor
   SetBooleanPropertyStoreValue(propertyStore, MFPKEY_VBRENABLED, TRUE);
   SetBooleanPropertyStoreValue(propertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, TRUE);
   SetUint32PropertyStoreValue(propertyStore, MFPKEY_DESIRED_VBRQUALITY, quality);
+}
+
+
+void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioEncoderParameters* encoderParameters)
+{
+  Topology* topology = Topology::CreatePartialTopograpy(mediaSource, mediaSink, 1);
+
+  topology->Encode(encoderParameters);
 }
