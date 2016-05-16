@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <wmcodecdsp.h>
 #include <exception>
 #include "MediaSink.h"
 
@@ -110,7 +111,6 @@ IMFMediaType* MediaSink::GetMediaTypeForStream(WORD streamNumber)
 {
   IMFASFStreamConfig *asfStreamConfig = nullptr;
   IMFASFProfile* mfAsfProfile;
-  IMFStreamSink* mfStreamSink = nullptr;
   IMFMediaType* mfMediaType = nullptr;
   HRESULT hr;
 
@@ -139,8 +139,7 @@ IMFMediaType* MediaSink::GetMediaTypeForStream(WORD streamNumber)
 IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
 {
   IMFTopologyNode* topologyTransformNode = nullptr;
-  IMFASFStreamConfig *asfStreamConfig = nullptr;
-  IMFStreamSink* mfStreamSink = nullptr;
+//  IMFASFStreamConfig *asfStreamConfig = nullptr;
   IMFMediaType* streamMediaType = nullptr;
   IPropertyStore* encodingConfigurationProperties = nullptr;
   IMFActivate* encoderActivationObj = nullptr;
@@ -179,8 +178,8 @@ IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
 
 IMFTransform* MediaSink::GetAudioEncoderForStream(WORD streamNumber)
 {
-  IMFASFStreamConfig *asfStreamConfig = nullptr;
-  IMFStreamSink* mfStreamSink = nullptr;
+//  IMFASFStreamConfig *asfStreamConfig = nullptr;
+//  IMFStreamSink* mfStreamSink = nullptr;
   IMFMediaType* streamMediaType = nullptr;
   IPropertyStore* encodingConfigurationProperties = nullptr;
   IMFActivate* encoderActivationObj = nullptr;
@@ -215,3 +214,70 @@ IMFTransform* MediaSink::GetAudioEncoderForStream(WORD streamNumber)
 
 
 
+void MediaSink::UpdatePostEncodeStreamSinkProperties(WORD streamNumber, IPropertyStore* encoderProperties)
+{
+  IMFStreamSink* mfStreamSink = nullptr;
+  IPropertyStore* streamSinkProperties;
+  PROPVARIANT pv;
+  HRESULT hr;
+
+  do
+  {
+
+    if (!SUCCEEDED(hr = _mfMediaSink->GetStreamSinkById(streamNumber, &mfStreamSink)))
+      break;
+
+    if (!SUCCEEDED(hr = mfStreamSink->QueryInterface(IID_PPV_ARGS(&streamSinkProperties))))
+      break;
+
+    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_STAT_BAVG, &pv)))
+      break;
+
+    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_STAT_BAVG, pv)))
+      break;
+
+    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
+      break;
+
+    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_STAT_RAVG, &pv)))
+      break;
+
+    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_STAT_RAVG, pv)))
+      break;
+
+    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
+      break;
+
+    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_STAT_BMAX, &pv)))
+      break;
+
+    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_STAT_BMAX, pv)))
+      break;
+
+    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
+      break;
+
+    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_STAT_RMAX, &pv)))
+      break;
+
+    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_STAT_RMAX, pv)))
+      break;
+
+    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
+      break;
+
+    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, &pv)))
+      break;
+
+    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, pv)))
+      break;
+
+    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
+      break;
+  } while (0);
+
+  if (FAILED(hr))
+    throw std::exception("Unabled to updated post-encoding values on the stream sink");
+}
+
+  

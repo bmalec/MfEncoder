@@ -35,8 +35,43 @@ Topology::~Topology()
 //  pTopology: A pointer to the full topology retrieved from the media session.
 //-------------------------------------------------------------------
 
-static HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaSink* mediaSink)
+ HRESULT Topology::UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaSink* mediaSink)
 {
+  IPropertyStore* encoderPropertyStore;
+  HRESULT hr;
+
+    hr = _audioEncoder->QueryInterface(IID_PPV_ARGS(&encoderPropertyStore));
+
+    _mediaSink->UpdatePostEncodeStreamSinkProperties(1, encoderPropertyStore);
+
+    /*
+  PROPVARIANT var = GetPropertyStoreValue(encoderPropertyStore, MFPKEY_STAT_BAVG);
+
+//  SetPropertyStoreValue(pStreamSinkProps, MFPKEY_STAT_BAVG, var);
+//  PropVariantClear(&var);
+
+  var = GetPropertyStoreValue(encoderPropertyStore, MFPKEY_STAT_RAVG);
+//  SetPropertyStoreValue(pStreamSinkProps, MFPKEY_STAT_RAVG, var);
+ // PropVariantClear(&var);
+
+  var = GetPropertyStoreValue(encoderPropertyStore, MFPKEY_STAT_BMAX);
+//  SetPropertyStoreValue(pStreamSinkProps, MFPKEY_STAT_BMAX, var);
+//  PropVariantClear(&var);
+
+  var = GetPropertyStoreValue(encoderPropertyStore, MFPKEY_STAT_RMAX);
+//  SetPropertyStoreValue(pStreamSinkProps, MFPKEY_STAT_RMAX, var);
+//  PropVariantClear(&var);
+
+  var = GetPropertyStoreValue(encoderPropertyStore, MFPKEY_WMAENC_AVGBYTESPERSEC);
+
+  return hr;
+
+
+  
+
+
+
+  /* old code
 
   HRESULT hr = S_OK;
 
@@ -165,6 +200,9 @@ done:
   if (mfFullTopology) mfFullTopology->Release();
 
   return hr;
+  */
+
+return hr;
 
 }
 

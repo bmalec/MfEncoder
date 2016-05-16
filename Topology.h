@@ -15,6 +15,8 @@ private:
 
   void _buildPartialTopograpy(MediaSource* source, MediaSink* sink, WORD streamNumber);
 
+  HRESULT UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaSink* mediaSink);
+
 
 
 protected:
