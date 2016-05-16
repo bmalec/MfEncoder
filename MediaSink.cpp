@@ -213,67 +213,48 @@ IMFTransform* MediaSink::GetAudioEncoderForStream(WORD streamNumber)
 }
 
 
-
-void MediaSink::UpdatePostEncodeStreamSinkProperties(WORD streamNumber, IPropertyStore* encoderProperties)
+static void CopyProperty(IPropertyStore* src, IPropertyStore* dest, const PROPERTYKEY& key)
 {
-  IMFStreamSink* mfStreamSink = nullptr;
-  IPropertyStore* streamSinkProperties;
   PROPVARIANT pv;
   HRESULT hr;
 
   do
   {
+    if (!SUCCEEDED(hr = src->GetValue(key, &pv)))
+      break;
 
+    if (!SUCCEEDED(hr = dest->SetValue(key, pv)))
+      break;
+
+    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
+      break;
+  } while (0);
+
+  if (FAILED(hr))
+    throw std::exception("Unable to copy property");
+}
+
+
+
+void MediaSink::UpdatePostEncodeStreamSinkProperties(WORD streamNumber, IPropertyStore* encoderProperties)
+{
+  IMFStreamSink* mfStreamSink = nullptr;
+  IPropertyStore* streamSinkProperties;
+  HRESULT hr;
+
+  do
+  {
     if (!SUCCEEDED(hr = _mfMediaSink->GetStreamSinkById(streamNumber, &mfStreamSink)))
       break;
 
     if (!SUCCEEDED(hr = mfStreamSink->QueryInterface(IID_PPV_ARGS(&streamSinkProperties))))
       break;
 
-    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_STAT_BAVG, &pv)))
-      break;
-
-    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_STAT_BAVG, pv)))
-      break;
-
-    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
-      break;
-
-    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_STAT_RAVG, &pv)))
-      break;
-
-    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_STAT_RAVG, pv)))
-      break;
-
-    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
-      break;
-
-    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_STAT_BMAX, &pv)))
-      break;
-
-    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_STAT_BMAX, pv)))
-      break;
-
-    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
-      break;
-
-    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_STAT_RMAX, &pv)))
-      break;
-
-    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_STAT_RMAX, pv)))
-      break;
-
-    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
-      break;
-
-    if (!SUCCEEDED(hr = encoderProperties->GetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, &pv)))
-      break;
-
-    if (!SUCCEEDED(hr = streamSinkProperties->SetValue(MFPKEY_WMAENC_AVGBYTESPERSEC, pv)))
-      break;
-
-    if (!SUCCEEDED(hr = PropVariantClear(&pv)))
-      break;
+    CopyProperty(encoderProperties, streamSinkProperties, MFPKEY_STAT_BAVG);
+    CopyProperty(encoderProperties, streamSinkProperties, MFPKEY_STAT_RAVG);
+    CopyProperty(encoderProperties, streamSinkProperties, MFPKEY_STAT_BMAX);
+    CopyProperty(encoderProperties, streamSinkProperties, MFPKEY_STAT_RMAX);
+    CopyProperty(encoderProperties, streamSinkProperties, MFPKEY_WMAENC_AVGBYTESPERSEC);
   } while (0);
 
   if (FAILED(hr))
