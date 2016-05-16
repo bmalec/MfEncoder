@@ -149,7 +149,6 @@
     <ClInclude Include="MediaSink.h" />
     <ClInclude Include="MediaSource.h" />
     <ClInclude Include="Parameters.h" />
-    <ClInclude Include="PropertyStore.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Topology.h" />
@@ -162,7 +161,6 @@
     <ClCompile Include="MediaSink.cpp" />
     <ClCompile Include="MediaSource.cpp" />
     <ClCompile Include="MfEncoder.cpp" />
-    <ClCompile Include="PropertyStore.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

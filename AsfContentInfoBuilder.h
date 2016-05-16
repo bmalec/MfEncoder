@@ -13,8 +13,6 @@ public:
   void SetMetadataAsString(LPWSTR field, LPWSTR value);
   IMFASFContentInfo* ConstructMfAsfContentInfo();
 
-//  IPropertyStore* GetEncoderConfigurationPropertyStore(WORD streamNumber);
-
 private:
   IMFASFContentInfo* _mfAsfContentInfo;
   IMFASFProfile* _mfAsfProfile;
