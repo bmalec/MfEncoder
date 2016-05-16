@@ -233,7 +233,7 @@ int wmain(int argc, wchar_t *argv[])
 
         wprintf_s(L"Encoding %s\n", findData.cFileName);
 
-        AudioEncoder::Encode(mediaSource, mediaSink, encoderParameters);
+        AudioEncoder::Encode(mediaSource, mediaSink, 1, encoderParameters);
 
         delete mediaSink;
         delete mediaSource;
