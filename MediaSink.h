@@ -24,6 +24,7 @@ public:
   IPropertyStore* GetEncoderConfigurationPropertyStore(WORD streamNumber);
   IMFTopologyNode* CreateTopologyOutputNode(WORD streamNumber);
   IMFTopologyNode* CreateTopologyTransformNode(WORD streamNumber);
+  IMFTransform* GetAudioEncoderForStream(WORD streamNumber);
 
 
 

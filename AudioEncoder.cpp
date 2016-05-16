@@ -66,7 +66,7 @@ int AudioEncoderParameters::GetSamplesPerSecond()
 
 
 
-
+/*
 AudioEncoder::AudioEncoder(IMFActivate* mfActivate)
 {
 
@@ -84,8 +84,8 @@ AudioEncoder::AudioEncoder(IMFActivate* mfActivate)
 
 
 }
-
-
+*/
+/*
 AudioEncoder::~AudioEncoder()
 {
   _propertyStore->Release();
@@ -93,7 +93,7 @@ AudioEncoder::~AudioEncoder()
   _mfActivate->ShutdownObject();
   _mfActivate->Release();
 }
-
+*/
 
 IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderParameters)
 {

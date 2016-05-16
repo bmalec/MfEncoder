@@ -108,7 +108,7 @@ static void SetMediaSinkContentInfoMetadata(AsfContentInfoBuilder* contentInfo, 
 
 int wmain(int argc, wchar_t *argv[])
 {
-  Parameters parameters;
+  Parameters commandLineParameters;
 
   if (argc < 1)
   {
@@ -116,27 +116,27 @@ int wmain(int argc, wchar_t *argv[])
     return 0;
   }
 
-  CommandLineParser::Parse(argc, argv, &parameters);
+  CommandLineParser::Parse(argc, argv, &commandLineParameters);
 
   AudioEncoderParameters* encoderParameters = nullptr;
 
-  if (parameters.Quality == 100)
+  if (commandLineParameters.Quality == 100)
   {
     encoderParameters = AudioEncoderParameters::CreateLosslessEncoderParameters(2, 44100, 16);
   }
   else
   {
-    encoderParameters = AudioEncoderParameters::CreateQualityBasedVbrParameters(parameters.Quality, 2, 44100, 16);
+    encoderParameters = AudioEncoderParameters::CreateQualityBasedVbrParameters(commandLineParameters.Quality, 2, 44100, 16);
   }
 
   // Verify that output folder exists, if specified
   // (and add a '\' to it if it doesn't exist)
 
-  if (*parameters.OutputFolder)
+  if (*commandLineParameters.OutputFolder)
   {
     WIN32_FILE_ATTRIBUTE_DATA fileData;
 
-    BOOL success = GetFileAttributesEx(parameters.OutputFolder, GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &fileData);
+    BOOL success = GetFileAttributesEx(commandLineParameters.OutputFolder, GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &fileData);
 
     // check if the file system object exists, but it's not a directory...
 
@@ -152,14 +152,14 @@ int wmain(int argc, wchar_t *argv[])
       return 0;
     }
 
-    size_t outputFolderLength = wcslen(parameters.OutputFolder);
+    size_t outputFolderLength = wcslen(commandLineParameters.OutputFolder);
 
     if (outputFolderLength < MAX_PATH - 1)
     {
-      if (*(parameters.OutputFolder + outputFolderLength - 1) != '\\')
+      if (*(commandLineParameters.OutputFolder + outputFolderLength - 1) != '\\')
       {
-        *(parameters.OutputFolder + outputFolderLength) = '\\';
-        *(parameters.OutputFolder + outputFolderLength + 1) = '\0';
+        *(commandLineParameters.OutputFolder + outputFolderLength) = '\\';
+        *(commandLineParameters.OutputFolder + outputFolderLength + 1) = '\0';
       }
     }
   }
@@ -178,7 +178,7 @@ int wmain(int argc, wchar_t *argv[])
     wchar_t srcFileFolder[MAX_PATH];
     wchar_t srcFileName[MAX_PATH];
 
-    wcscpy(srcFileFolder, parameters.InputFilename);
+    wcscpy(srcFileFolder, commandLineParameters.InputFilename);
 
     BOOL ret = PathRemoveFileSpec(srcFileFolder);
 
@@ -202,7 +202,7 @@ int wmain(int argc, wchar_t *argv[])
 
     WIN32_FIND_DATA findData;
 
-    HANDLE hFindFile = FindFirstFile(parameters.InputFilename, &findData);
+    HANDLE hFindFile = FindFirstFile(commandLineParameters.InputFilename, &findData);
 
     if (hFindFile != INVALID_HANDLE_VALUE)
     {
@@ -217,20 +217,20 @@ int wmain(int argc, wchar_t *argv[])
 
         wchar_t outputFilename[MAX_PATH];
 
-        if (*parameters.OutputFolder)
+        if (*commandLineParameters.OutputFolder)
         {
-          wcscpy(outputFilename, parameters.OutputFolder);
+          wcscpy(outputFilename, commandLineParameters.OutputFolder);
           wcscat(outputFilename, findData.cFileName);
           PathRenameExtension(outputFilename, L".wma");
         }
         else
         {
-          wcscpy(outputFilename, parameters.OutputFilename);
+          wcscpy(outputFilename, commandLineParameters.OutputFilename);
         }
 
         AsfContentInfoBuilder *contentInfo = new AsfContentInfoBuilder();
         contentInfo->AddStreamSink(1, encoderParameters);
-        SetMediaSinkContentInfoMetadata(contentInfo, mediaSource, &parameters);
+        SetMediaSinkContentInfoMetadata(contentInfo, mediaSource, &commandLineParameters);
 
         MediaSink* mediaSink = MediaSink::Create(outputFilename, contentInfo->ConstructMfAsfContentInfo());
 
@@ -239,7 +239,7 @@ int wmain(int argc, wchar_t *argv[])
         Topology* topology = Topology::CreatePartialTopograpy(mediaSource, mediaSink, 1);
 
         wprintf_s(L"Encoding %s\n", findData.cFileName);
-        topology->Encode(&parameters);
+        topology->Encode(encoderParameters);
 
         delete topology;
         delete mediaSink;

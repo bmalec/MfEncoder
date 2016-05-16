@@ -2,14 +2,16 @@
 
 #include "MediaSource.h"
 #include "MediaSink.h"
-#include "Parameters.h"
+#include "AudioEncoder.h"
 
 
 class Topology
 {
 private:
   IMFTopology* _mfTopology;
+  IMFTransform* _audioEncoder;
   MediaSink* _mediaSink;
+
 
   void _buildPartialTopograpy(MediaSource* source, MediaSink* sink, WORD streamNumber);
 
@@ -20,7 +22,7 @@ protected:
 
 public:
   static Topology* CreatePartialTopograpy(MediaSource* source, MediaSink* sink, WORD streamNumber);  // TODO this should not be separate from Create()
-  HRESULT Encode(Parameters* parameters);
+  HRESULT Encode(AudioEncoderParameters* encoderParameters);
 
   ~Topology();
 

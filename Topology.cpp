@@ -3,6 +3,7 @@
 #include <wmcodecdsp.h>
 #include <mfapi.h>
 #include "Util.h"
+#include <stdexcept>
 #include "Topology.h"
 
 Topology::Topology(IMFTopology* mfTopology, MediaSink* mediaSink)
@@ -177,7 +178,7 @@ done:
 //  pTopology:  A pointer to the encoding topology.
 //-------------------------------------------------------------------
 
-HRESULT Topology::Encode(Parameters* parameters)
+HRESULT Topology::Encode(AudioEncoderParameters* encoderParameters)
 {
 
   IMFMediaSession *mfMediaSession = nullptr;
@@ -282,7 +283,7 @@ HRESULT Topology::Encode(Parameters* parameters)
 
     case MEEndOfPresentation:
     {
-      if (parameters->Quality > 0)
+      if (encoderParameters->IsQualityBasedVbr())
       {
         hr = UpdateVbrStreamProperties(mfMediaSession, _mediaSink);
         if (FAILED(hr))
@@ -347,16 +348,55 @@ void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink, WORD
     // Add source node
 
     sourceNode = source->CreateTopologySourceNode();
+
     if (!SUCCEEDED(hr = _mfTopology->AddNode(sourceNode)))
       break;
 
     // Add encoder node
 
-    encoderNode = sink->CreateTopologyTransformNode(1);
-    
+    // this is a little more convoluted than hoped for, but bear with me.
+    // at first glance it seems odd that we'd create the compressor transform
+    // through the MediaSink object.  But, it turns
+    // out the the media sink holds the two main ingredients needed to
+    // create the encoder: the output stream MediaType, and, crucially,
+    // the EncodingConfigurationPropertyStore that's a requirement if
+    // you want to do quality-based VBR.
+    //
+    // Originally I had a method in MediaSink that functioned similiar to the
+    // MediaSource::CreateTopologySourceNode() and MediaSink::CreateTopologyOutputNode().
+    // This worked ok, but another problem with quality-based VBR is (apparently)
+    // you're supposed to set some properties on the output stream,
+    // based on values computed by the encoder during compressions.
+    // The original example code jumped thorugh hoops to get back a reference
+    // to the encoder by traversing the full topology, but I felt
+    // it was much more understandable to first save a reference to
+    // the actual encoder object, and use that for the post-processing
+    // property patch.
+    //
+    // Say that ten times quick!
+
+
+
+    _audioEncoder = sink->GetAudioEncoderForStream(1);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &encoderNode);
+
+    // Set the object pointer.
+    hr = encoderNode->SetObject(_audioEncoder);
+
     if (!SUCCEEDED(hr = _mfTopology->AddNode(encoderNode)))
       break;
 
+
+
+
+    // temp code end
+
+/*    encoderNode = sink->CreateTopologyTransformNode(1);
+    
+    if (!SUCCEEDED(hr = _mfTopology->AddNode(encoderNode)))
+      break;
+*/
     // connect the source node to the encoder
 
     if (!SUCCEEDED(hr = sourceNode->ConnectOutput(0, encoderNode, 0)))

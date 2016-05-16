@@ -37,10 +37,10 @@ public:
   static void SetEncoderPropertyStoreValuesForQualityBasedVbr(IPropertyStore* propertyStore, int quality);
 
 //  static IMFMediaType* GetConstantBitrateMediaType(int bitrate);
-  ~AudioEncoder();
+//  ~AudioEncoder();
 
 protected:
-  AudioEncoder(IMFActivate* mfActivate);
+//  AudioEncoder(IMFActivate* mfActivate);
 
 
 private:
