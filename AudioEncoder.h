@@ -37,7 +37,7 @@ class AudioEncoder
 public:
   static IMFMediaType* GetEncoderMediaType(AudioEncoderParameters* encoderParameters);
   static void SetEncoderPropertyStoreValuesForQualityBasedVbr(IPropertyStore* propertyStore, int quality);
-  static void Encode(MediaSource* mediaSource, MediaSink* mediaSink, WORD streamNumber, AudioEncoderParameters* encoderParameters);
+  static void Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioEncoderParameters* encoderParameters);
 
 private:
   IMFActivate* _mfActivate;
