@@ -178,8 +178,6 @@ IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
 
 IMFTransform* MediaSink::GetAudioEncoderForStream(WORD streamNumber)
 {
-//  IMFASFStreamConfig *asfStreamConfig = nullptr;
-//  IMFStreamSink* mfStreamSink = nullptr;
   IMFMediaType* streamMediaType = nullptr;
   IPropertyStore* encodingConfigurationProperties = nullptr;
   IMFActivate* encoderActivationObj = nullptr;
@@ -197,17 +195,18 @@ IMFTransform* MediaSink::GetAudioEncoderForStream(WORD streamNumber)
 
     streamMediaType = GetMediaTypeForStream(streamNumber);
 
-    //    IMFASFContentInfo* mfAsfContentInfo = _mediaSinkContentInfo->ConstructMfAsfContentInfo();
+    if (!SUCCEEDED(hr = _mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &encodingConfigurationProperties)))
+      break;
 
-    hr = _mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &encodingConfigurationProperties);
+    if (!SUCCEEDED(hr = MFCreateWMAEncoderActivate(streamMediaType, encodingConfigurationProperties, &encoderActivationObj)))
+      break;
 
-    hr = MFCreateWMAEncoderActivate(streamMediaType, encodingConfigurationProperties, &encoderActivationObj);
-    hr = encoderActivationObj->ActivateObject(IID_PPV_ARGS(&mfTransform));
-
-
-
-
+    if (!SUCCEEDED(hr = encoderActivationObj->ActivateObject(IID_PPV_ARGS(&mfTransform))))
+      break;
   } while (0);
+
+  if (FAILED(hr))
+    throw std::exception("Unable to retrieve transform for StreamSink");
 
   return mfTransform;
 }
