@@ -217,10 +217,268 @@ void AudioEncoder::SetEncoderPropertyStoreValuesForQualityBasedVbr(IPropertyStor
   SetUint32PropertyStoreValue(propertyStore, MFPKEY_DESIRED_VBRQUALITY, quality);
 }
 
+static IMFTopology* BuildPartialTopography(MediaSource* source, IMFTransform* __audioEncoder, MediaSink* sink, WORD streamNumber)
+{
+  IMFTopology* mfTopology = nullptr;
+//  IMFTransform* audioEncoder = nullptr;
+  IMFTopologyNode* encoderNode = nullptr;
+  IMFTopologyNode* sourceNode = nullptr;
+  IMFTopologyNode* outputNode = nullptr;
+  //Create the topology that represents the encoding pipeline
+  HRESULT hr = MFCreateTopology(&mfTopology);
+
+//  Topology* topology = new Topology(mfTopology, mediaSink);
+//  topology->_buildPartialTopograpy(source, mediaSink, streamNumber);
+
+
+  do {
+
+    // Add source node
+
+    sourceNode = source->CreateTopologySourceNode();
+
+    if (!SUCCEEDED(hr = mfTopology->AddNode(sourceNode)))
+      break;
+
+    // Add encoder node
+
+    // this is a little more convoluted than hoped for, but bear with me.
+    // at first glance it seems odd that we'd create the compressor transform
+    // through the MediaSink object.  But, it turns
+    // out the the media sink holds the two main ingredients needed to
+    // create the encoder: the output stream MediaType, and, crucially,
+    // the EncodingConfigurationPropertyStore that's a requirement if
+    // you want to do quality-based VBR.
+    //
+    // Originally I had a method in MediaSink that functioned similiar to the
+    // MediaSource::CreateTopologySourceNode() and MediaSink::CreateTopologyOutputNode().
+    // This worked ok, but another problem with quality-based VBR is (apparently)
+    // you're supposed to set some properties on the output stream,
+    // based on values computed by the encoder during compressions.
+    // The original example code jumped thorugh hoops to get back a reference
+    // to the encoder by traversing the full topology, but I felt
+    // it was much more understandable to first save a reference to
+    // the actual encoder object, and use that for the post-processing
+    // property patch.
+    //
+    // Say that ten times quick!
+
+
+
+//    audioEncoder = sink->GetAudioEncoderForStream(1);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &encoderNode);
+
+    // Set the object pointer.
+    hr = encoderNode->SetObject(__audioEncoder);
+
+    if (!SUCCEEDED(hr = mfTopology->AddNode(encoderNode)))
+      break;
+
+
+
+
+    // temp code end
+
+    /*    encoderNode = sink->CreateTopologyTransformNode(1);
+
+    if (!SUCCEEDED(hr = _mfTopology->AddNode(encoderNode)))
+    break;
+    */
+    // connect the source node to the encoder
+
+    if (!SUCCEEDED(hr = sourceNode->ConnectOutput(0, encoderNode, 0)))
+      break;
+
+    // Add sink node
+
+    outputNode = sink->CreateTopologyOutputNode(streamNumber);
+    if (!SUCCEEDED(hr = mfTopology->AddNode(outputNode)))
+      break;
+
+    // connect the transform node to the output node
+
+    if (!SUCCEEDED(hr = encoderNode->ConnectOutput(0, outputNode, 0)))
+      break;
+  } while (0);
+
+//  if (sourceNode) sourceNode->Release();
+//  if (outputNode) outputNode->Release();
+//  if (encoderNode) encoderNode->Release();
+
+
+  if (FAILED(hr))
+    throw std::exception("Unable to construct topology");
+
+  return mfTopology;
+}
+
+
+static HRESULT UpdateVbrStreamProperties(IMFTransform* audioEncoder, MediaSink* mediaSink)
+{
+  IPropertyStore* encoderPropertyStore;
+  HRESULT hr;
+
+  hr = audioEncoder->QueryInterface(IID_PPV_ARGS(&encoderPropertyStore));
+
+  mediaSink->UpdatePostEncodeStreamSinkProperties(1, encoderPropertyStore);
+
+  return hr;
+}
+
+
+
+static HRESULT RunEncode(IMFTopology* mfTopology, MediaSink* mediaSink, IMFTransform* audioEncoder, AudioEncoderParameters* encoderParameters)
+{
+
+  IMFMediaSession *mfMediaSession = nullptr;
+  IMFMediaEvent* pEvent = nullptr;
+
+
+  MediaEventType meType = MEUnknown;  // Event type
+
+  HRESULT hr = S_OK;
+  HRESULT hrStatus = S_OK;            // Event status
+
+  MF_TOPOSTATUS TopoStatus = MF_TOPOSTATUS_INVALID; // Used with MESessionTopologyStatus event.    
+
+
+  hr = MFCreateMediaSession(nullptr, &mfMediaSession);
+  if (FAILED(hr))
+  {
+    goto done;
+  }
+
+  hr = mfMediaSession->SetTopology(MFSESSION_SETTOPOLOGY_IMMEDIATE, mfTopology);
+  if (FAILED(hr))
+  {
+    goto done;
+  }
+
+  //Get media session events synchronously
+  while (1)
+  {
+    hr = mfMediaSession->GetEvent(0, &pEvent);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    hr = pEvent->GetType(&meType);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    hr = pEvent->GetStatus(&hrStatus);
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+    if (FAILED(hrStatus))
+    {
+      hr = hrStatus;
+      goto done;
+    }
+
+    switch (meType)
+    {
+    case MESessionTopologyStatus:
+    {
+      // Get the status code.
+      MF_TOPOSTATUS status = (MF_TOPOSTATUS)MFGetAttributeUINT32(
+        pEvent, MF_EVENT_TOPOLOGY_STATUS, MF_TOPOSTATUS_INVALID);
+
+      if (status == MF_TOPOSTATUS_READY)
+      {
+        PROPVARIANT var;
+        PropVariantInit(&var);
+        wprintf_s(L"Topology resolved and set on the media session.\n");
+
+        hr = mfMediaSession->Start(nullptr, &var);
+        if (FAILED(hr))
+        {
+          goto done;
+        }
+
+      }
+      if (status == MF_TOPOSTATUS_STARTED_SOURCE)
+      {
+        wprintf_s(L"Encoding started.\n");
+        break;
+      }
+      if (status == MF_TOPOSTATUS_ENDED)
+      {
+        wprintf_s(L"Encoding complete.\n");
+        hr = mfMediaSession->Close();
+        if (FAILED(hr))
+        {
+          goto done;
+        }
+
+        break;
+      }
+    }
+    break;
+
+
+    case MESessionEnded:
+      wprintf_s(L"Encoding complete.\n");
+      hr = mfMediaSession->Close();
+      if (FAILED(hr))
+      {
+        goto done;
+      }
+      break;
+
+    case MEEndOfPresentation:
+    {
+      if (encoderParameters->IsQualityBasedVbr())
+      {
+        hr = UpdateVbrStreamProperties(audioEncoder, mediaSink);
+        if (FAILED(hr))
+        {
+          goto done;
+        }
+        wprintf_s(L"Updated sinks for VBR. \n");
+      }
+    }
+    break;
+
+    case MESessionClosed:
+      wprintf_s(L"Encoding session closed.\n");
+
+      hr = mfMediaSession->Shutdown();
+      goto done;
+    }
+    if (FAILED(hr))
+    {
+      goto done;
+    }
+
+    pEvent->Release();
+
+  }
+done:
+  pEvent->Release();
+  if (mfMediaSession) mfMediaSession->Release();
+  return hr;
+}
+
+
 
 void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioEncoderParameters* encoderParameters)
 {
-  Topology* topology = Topology::CreatePartialTopograpy(mediaSource, mediaSink, 1);
+//  Topology* topology = Topology::CreatePartialTopograpy(mediaSource, mediaSink, 1);
 
-  topology->Encode(encoderParameters);
+
+
+//   topology->Encode(encoderParameters);
+
+  IMFTransform* audioEncoder = mediaSink->GetAudioEncoderForStream(1);
+
+  IMFTopology* topology = BuildPartialTopography(mediaSource, audioEncoder, mediaSink, 1);
+ 
+  RunEncode(topology, mediaSink, audioEncoder, encoderParameters);
+
 }
