@@ -217,7 +217,7 @@ void AudioEncoder::SetEncoderPropertyStoreValuesForQualityBasedVbr(IPropertyStor
   SetUint32PropertyStoreValue(propertyStore, MFPKEY_DESIRED_VBRQUALITY, quality);
 }
 
-static IMFTopology* BuildEncodingTopography(MediaSource* source, IMFTransform* audioEncoder,  MediaSink* sink, WORD streamNumber)
+static IMFTopology* BuildEncodingTopography(MediaSource* source, IMFTransform* audioEncoder,  MediaSink* sink)
 {
   IMFTopology* mfTopology = nullptr;
 //  IMFTransform* audioEncoder = nullptr;
@@ -292,7 +292,7 @@ static IMFTopology* BuildEncodingTopography(MediaSource* source, IMFTransform* a
 
     // Add sink node
 
-    outputNode = sink->CreateTopologyOutputNode(streamNumber);
+    outputNode = sink->CreateTopologyOutputNode(1);
     if (!SUCCEEDED(hr = mfTopology->AddNode(outputNode)))
       break;
 
@@ -471,40 +471,115 @@ done:
 }
 
 
+static HRESULT GetNextMediaSessionEvent(IMFMediaSession* mfMediaSession, MediaEventType* mediaEventType, MF_TOPOSTATUS* eventTopologyStatus)
+{
+  IMFMediaEvent* mfMediaEvent = nullptr;
+  HRESULT eventStatus, hr;
+
+  do
+  {
+    if (!SUCCEEDED(hr = mfMediaSession->GetEvent(0, &mfMediaEvent)))
+      break;
+
+    if (!SUCCEEDED(hr = mfMediaEvent->GetType(mediaEventType)))
+      break;
+
+    if (!SUCCEEDED(hr = mfMediaEvent->GetStatus(&eventStatus)))
+      break;
+
+    *eventTopologyStatus = (MF_TOPOSTATUS)MFGetAttributeUINT32(mfMediaEvent, MF_EVENT_TOPOLOGY_STATUS, MF_TOPOSTATUS_INVALID);
+  } while (0);
+
+  if (mfMediaEvent) mfMediaEvent->Release();
+
+  if (FAILED(hr))
+  {
+    throw std::exception("Error retrieving MediaSession event");
+  }
+
+  return eventStatus;
+}
+
+
 
 void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioEncoderParameters* encoderParameters)
 {
-//  Topology* topology = Topology::CreatePartialTopograpy(mediaSource, mediaSink, 1);
-
-  IMFMediaSession* mediaSession = nullptr;
+  IMFMediaSession* mfMediaSession = nullptr;
   HRESULT hr;
-
-
-//   topology->Encode(encoderParameters);
 
   IMFTransform* audioEncoder = mediaSink->GetAudioEncoderForStream(1);
 
-  IMFTopology* topology = BuildEncodingTopography(mediaSource, audioEncoder, mediaSink, 1);
+  IMFTopology* topology = BuildEncodingTopography(mediaSource, audioEncoder, mediaSink);
 
-  hr = MFCreateMediaSession(nullptr, &mediaSession);
+  hr = MFCreateMediaSession(nullptr, &mfMediaSession);
 
-  mediaSession->SetTopology(MFSESSION_SETTOPOLOGY_IMMEDIATE, topology);
+  mfMediaSession->SetTopology(MFSESSION_SETTOPOLOGY_IMMEDIATE, topology);
+
+  // MediaSession loop start
+
+  MediaEventType mediaEventType = MEUnknown;  // Event type
+
+  hr = S_OK;
+  HRESULT eventStatus;            // Event status
+
+  MF_TOPOSTATUS topologyStatus = MF_TOPOSTATUS_INVALID; // Used with MESessionTopologyStatus event.    
+
+  eventStatus = GetNextMediaSessionEvent(mfMediaSession, &mediaEventType, &topologyStatus);
+
+  while (SUCCEEDED(eventStatus))
+  {
+    if (mediaEventType == MESessionTopologyStatus)
+    {
+      if (topologyStatus == MF_TOPOSTATUS_READY)
+      {
+        PROPVARIANT startingPosition;
+        PropVariantInit(&startingPosition);
+
+        if (!SUCCEEDED(hr = mfMediaSession->Start(nullptr, &startingPosition)))
+          break;
+
+        wprintf_s(L"MediaSession started\n");
+      }
+      else if (topologyStatus == MF_TOPOSTATUS_ENDED)
+      {
+        if (!SUCCEEDED(hr = mfMediaSession->Close()))
+          break;
+      }
+    }
+    else if (mediaEventType == MESessionEnded)
+    {
+      if (!SUCCEEDED(hr = mfMediaSession->Close()))
+        break;
+
+      wprintf_s(L"Encoding complete.\n");
+    }
+    else if (mediaEventType == MEEndOfPresentation)
+    {
+      if (encoderParameters->IsQualityBasedVbr())
+      {
+        if (!SUCCEEDED(hr = UpdateVbrStreamProperties(audioEncoder, mediaSink)))
+          break;
+
+        wprintf_s(L"Updated sinks for VBR. \n");
+      }
+    }
+    else if (mediaEventType == MESessionClosed)
+    {
+      wprintf_s(L"Encoding session closed.\n");
+
+//      if (!SUCCEEDED(hr = mfMediaSession->Shutdown()))
+//        break;
+    }
+
+    eventStatus = GetNextMediaSessionEvent(mfMediaSession, &mediaEventType, &topologyStatus);
+  }
+
+
+done:
+//  mfMediaEvent->Release();
+
 
   
-
- 
-  RunEncode(mediaSession, mediaSink, audioEncoder, encoderParameters);
-
-/*
-  if (encoderParameters->IsQualityBasedVbr())
-  {
-    hr = UpdateVbrStreamProperties(audioEncoder, mediaSink);
-    wprintf_s(L"Updated sinks for VBR. \n");
-  }
-*/
-//  mediaSession->Close();
-//  mediaSession->Shutdown();
-//  mediaSession->Release();
 
   if (topology) topology->Release();
 
