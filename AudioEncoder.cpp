@@ -328,147 +328,6 @@ static HRESULT UpdateVbrStreamProperties(IMFTransform* audioEncoder, MediaSink* 
 
 
 
-static HRESULT RunEncode(IMFMediaSession* mediaSession, MediaSink* mediaSink, IMFTransform* audioEncoder, AudioEncoderParameters* encoderParameters)
-{
-
-//  IMFMediaSession *mfMediaSession = nullptr;
-  IMFMediaEvent* pEvent = nullptr;
-
-
-  MediaEventType meType = MEUnknown;  // Event type
-
-  HRESULT hr = S_OK;
-  HRESULT hrStatus = S_OK;            // Event status
-
-  MF_TOPOSTATUS TopoStatus = MF_TOPOSTATUS_INVALID; // Used with MESessionTopologyStatus event.    
-
-/*
-  hr = MFCreateMediaSession(nullptr, &mfMediaSession);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-
-  hr = mfMediaSession->SetTopology(MFSESSION_SETTOPOLOGY_IMMEDIATE, mfTopology);
-  if (FAILED(hr))
-  {
-    goto done;
-  }
-  */
-  //Get media session events synchronously
-  while (1)
-  {
-    hr = mediaSession->GetEvent(0, &pEvent);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pEvent->GetType(&meType);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    hr = pEvent->GetStatus(&hrStatus);
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-    if (FAILED(hrStatus))
-    {
-      hr = hrStatus;
-      goto done;
-    }
-
-    switch (meType)
-    {
-    case MESessionTopologyStatus:
-    {
-      // Get the status code.
-      MF_TOPOSTATUS status = (MF_TOPOSTATUS)MFGetAttributeUINT32(
-        pEvent, MF_EVENT_TOPOLOGY_STATUS, MF_TOPOSTATUS_INVALID);
-
-      if (status == MF_TOPOSTATUS_READY)
-      {
-        PROPVARIANT var;
-        PropVariantInit(&var);
-        wprintf_s(L"Topology resolved and set on the media session.\n");
-
-        hr = mediaSession->Start(nullptr, &var);
-        if (FAILED(hr))
-        {
-          goto done;
-        }
-
-      }
-      if (status == MF_TOPOSTATUS_STARTED_SOURCE)
-      {
-        wprintf_s(L"Encoding started.\n");
-        break;
-      }
-      if (status == MF_TOPOSTATUS_ENDED)
-      {
-        wprintf_s(L"Encoding complete.\n");
-        hr = mediaSession->Close();
-        if (FAILED(hr))
-        {
-          goto done;
-        }
-
-        break;
-      }
-    }
-    break;
-
-
-    case MESessionEnded:
-      wprintf_s(L"Encoding complete.\n");
-      hr = mediaSession->Close();
-      // will this work???
-
-      goto done;
-      if (FAILED(hr))
-      {
-        goto done;
-      }
-      break;
-
-    case MEEndOfPresentation:
-    {
-      
-      if (encoderParameters->IsQualityBasedVbr())
-      {
-        hr = UpdateVbrStreamProperties(audioEncoder, mediaSink);
-        if (FAILED(hr))
-        {
-          goto done;
-        }
-        wprintf_s(L"Updated sinks for VBR. \n");
-      }
-      
-    }
-    break;
-
-    case MESessionClosed:
-      wprintf_s(L"Encoding session closed.\n");
-
-      hr = mediaSession->Shutdown();
-      goto done;
-    }
-    if (FAILED(hr))
-    {
-      goto done;
-    }
-
-    pEvent->Release();
-
-  }
-done:
-  pEvent->Release();
-//  if (mediaSession) mfMediaSession->Release();
-  return hr;
-}
 
 
 static HRESULT GetNextMediaSessionEvent(IMFMediaSession* mfMediaSession, MediaEventType* mediaEventType, MF_TOPOSTATUS* eventTopologyStatus)
@@ -526,7 +385,7 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
 
   eventStatus = GetNextMediaSessionEvent(mfMediaSession, &mediaEventType, &topologyStatus);
 
-  while (SUCCEEDED(eventStatus))
+  while (SUCCEEDED(eventStatus) && (mediaEventType != MESessionClosed))
   {
     if (mediaEventType == MESessionTopologyStatus)
     {
@@ -542,12 +401,16 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
       }
       else if (topologyStatus == MF_TOPOSTATUS_ENDED)
       {
-        if (!SUCCEEDED(hr = mfMediaSession->Close()))
-          break;
+        wprintf_s(L"TopoStatus Ended\n");
+
+//        if (!SUCCEEDED(hr = mfMediaSession->Close()))
+//          break;
       }
     }
     else if (mediaEventType == MESessionEnded)
     {
+      wprintf_s(L"MeSessionEnded\n");
+
       if (!SUCCEEDED(hr = mfMediaSession->Close()))
         break;
 
@@ -573,6 +436,10 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
 
     eventStatus = GetNextMediaSessionEvent(mfMediaSession, &mediaEventType, &topologyStatus);
   }
+
+  hr = mfMediaSession->Shutdown();
+
+
 
 
 done:
