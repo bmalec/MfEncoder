@@ -385,7 +385,7 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
 
   eventStatus = GetNextMediaSessionEvent(mfMediaSession, &mediaEventType, &topologyStatus);
 
-  while (SUCCEEDED(eventStatus) && (mediaEventType != MESessionEnded))
+  while (SUCCEEDED(eventStatus) && (mediaEventType != MESessionClosed))
   {
     if (mediaEventType == MESessionTopologyStatus)
     {
@@ -399,20 +399,13 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
 
         wprintf_s(L"MediaSession started\n");
       }
-      else if (topologyStatus == MF_TOPOSTATUS_ENDED)
-      {
-        wprintf_s(L"TopoStatus Ended\n");
-
-//        if (!SUCCEEDED(hr = mfMediaSession->Close()))
-//          break;
-      }
     }
     else if (mediaEventType == MESessionEnded)
     {
       wprintf_s(L"MeSessionEnded\n");
 
-//      if (!SUCCEEDED(hr = mfMediaSession->Close()))
-//        break;
+      if (!SUCCEEDED(hr = mfMediaSession->Close()))
+        break;
 
       wprintf_s(L"Encoding complete.\n");
     }
@@ -437,7 +430,7 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
     eventStatus = GetNextMediaSessionEvent(mfMediaSession, &mediaEventType, &topologyStatus);
   }
 
-  hr = mfMediaSession->Close();
+//  hr = mfMediaSession->Close();
   hr = mfMediaSession->Shutdown();
 
 
