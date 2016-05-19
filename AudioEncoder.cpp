@@ -66,36 +66,6 @@ int AudioEncoderParameters::GetSamplesPerSecond()
 }
 
 
-
-/*
-AudioEncoder::AudioEncoder(IMFActivate* mfActivate)
-{
-
-  _mfActivate = mfActivate;
-
-  if (!SUCCEEDED(_mfActivate->ActivateObject(IID_PPV_ARGS(&_mfTransform))))
-    throw std::exception("Unable to activate audio encoder");
-
-  if (!SUCCEEDED(_mfTransform->QueryInterface(IID_PPV_ARGS(&_propertyStore))))
-    throw std::exception("Unable to access audio encoder property store");
-
-
-
-
-
-
-}
-*/
-/*
-AudioEncoder::~AudioEncoder()
-{
-  _propertyStore->Release();
-  _mfTransform->Release();
-  _mfActivate->ShutdownObject();
-  _mfActivate->Release();
-}
-*/
-
 IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderParameters)
 {
   IMFMediaType* result;
@@ -140,19 +110,14 @@ IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderP
      SetEncoderPropertyStoreValuesForQualityBasedVbr(propertyStore, encoderParameters->GetQualityLevel());
    }
 
-  // this fails with a not_implemented error  hr = propertyStore->Commit();
-
   // enumerate output types and try to find the appropriate one for our purposes
 
-  UINT32 channelCount;
-  UINT32 samplesPerSecond;
-  UINT32 bitsPerSample;
+  UINT32 channelCount, samplesPerSecond, bitsPerSample;
+  DWORD index = 0;
 
   int desiredChannelCount = encoderParameters->GetChannelCount();
   int desiredSamplesPerSecond = encoderParameters->GetSamplesPerSecond();
   int desiredBitsPerSample = encoderParameters->GetBitsPerSample();
-
-  DWORD index = 0;
 
   while (true)
   {
@@ -185,7 +150,6 @@ IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderP
     {
       mediaType->Release();
     }
-
   }
 
   propertyStore->Release();
@@ -220,19 +184,14 @@ void AudioEncoder::SetEncoderPropertyStoreValuesForQualityBasedVbr(IPropertyStor
 static IMFTopology* BuildEncodingTopography(MediaSource* source, IMFTransform* audioEncoder,  MediaSink* sink)
 {
   IMFTopology* mfTopology = nullptr;
-//  IMFTransform* audioEncoder = nullptr;
   IMFTopologyNode* encoderNode = nullptr;
   IMFTopologyNode* sourceNode = nullptr;
   IMFTopologyNode* outputNode = nullptr;
+
   //Create the topology that represents the encoding pipeline
   HRESULT hr = MFCreateTopology(&mfTopology);
 
-//  Topology* topology = new Topology(mfTopology, mediaSink);
-//  topology->_buildPartialTopograpy(source, mediaSink, streamNumber);
-
-
   do {
-
     // Add source node
 
     sourceNode = source->CreateTopologySourceNode();
@@ -263,10 +222,6 @@ static IMFTopology* BuildEncodingTopography(MediaSource* source, IMFTransform* a
     //
     // Say that ten times quick!
 
-
-
-//    audioEncoder = sink->GetAudioEncoderForStream(1);
-
     hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &encoderNode);
 
     // Set the object pointer.
@@ -275,16 +230,6 @@ static IMFTopology* BuildEncodingTopography(MediaSource* source, IMFTransform* a
     if (!SUCCEEDED(hr = mfTopology->AddNode(encoderNode)))
       break;
 
-
-
-
-    // temp code end
-
-    /*    encoderNode = sink->CreateTopologyTransformNode(1);
-
-    if (!SUCCEEDED(hr = _mfTopology->AddNode(encoderNode)))
-    break;
-    */
     // connect the source node to the encoder
 
     if (!SUCCEEDED(hr = sourceNode->ConnectOutput(0, encoderNode, 0)))
@@ -302,10 +247,9 @@ static IMFTopology* BuildEncodingTopography(MediaSource* source, IMFTransform* a
       break;
   } while (0);
 
-//  if (sourceNode) sourceNode->Release();
-//  if (outputNode) outputNode->Release();
-//  if (encoderNode) encoderNode->Release();
-
+  if (sourceNode) sourceNode->Release();
+  if (outputNode) outputNode->Release();
+  if (encoderNode) encoderNode->Release();
 
   if (FAILED(hr))
     throw std::exception("Unable to construct topology");
@@ -364,50 +308,35 @@ static HRESULT GetNextMediaSessionEvent(IMFMediaSession* mfMediaSession, MediaEv
 void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioEncoderParameters* encoderParameters)
 {
   IMFMediaSession* mfMediaSession = nullptr;
-  HRESULT hr;
+  MediaEventType mediaEventType;
+  MF_TOPOSTATUS topologyStatus;
+  HRESULT eventStatus, hr;
 
   IMFTransform* audioEncoder = mediaSink->GetAudioEncoderForStream(1);
 
   IMFTopology* topology = BuildEncodingTopography(mediaSource, audioEncoder, mediaSink);
 
-  hr = MFCreateMediaSession(nullptr, &mfMediaSession);
+  if (!SUCCEEDED(MFCreateMediaSession(nullptr, &mfMediaSession)))
+    throw std::exception("Unable to create MediaSession");
 
-  mfMediaSession->SetTopology(MFSESSION_SETTOPOLOGY_IMMEDIATE, topology);
+  if (!SUCCEEDED(mfMediaSession->SetTopology(MFSESSION_SETTOPOLOGY_IMMEDIATE, topology)))
+    throw std::exception("Unable to set topology on MediaSession");
 
   // MediaSession loop start
-
-  MediaEventType mediaEventType = MEUnknown;  // Event type
-
-  hr = S_OK;
-  HRESULT eventStatus;            // Event status
-
-  MF_TOPOSTATUS topologyStatus = MF_TOPOSTATUS_INVALID; // Used with MESessionTopologyStatus event.    
 
   eventStatus = GetNextMediaSessionEvent(mfMediaSession, &mediaEventType, &topologyStatus);
 
   while (SUCCEEDED(eventStatus) && (mediaEventType != MESessionClosed))
   {
-    if (mediaEventType == MESessionTopologyStatus)
+    if ((mediaEventType == MESessionTopologyStatus) && (topologyStatus == MF_TOPOSTATUS_READY))
     {
-      if (topologyStatus == MF_TOPOSTATUS_READY)
-      {
-        PROPVARIANT startingPosition;
-        PropVariantInit(&startingPosition);
+      PROPVARIANT startingPosition;
+      PropVariantInit(&startingPosition);
 
-        if (!SUCCEEDED(hr = mfMediaSession->Start(nullptr, &startingPosition)))
-          break;
-
-        wprintf_s(L"MediaSession started\n");
-      }
-    }
-    else if (mediaEventType == MESessionEnded)
-    {
-      wprintf_s(L"MeSessionEnded\n");
-
-      if (!SUCCEEDED(hr = mfMediaSession->Close()))
+      if (!SUCCEEDED(hr = mfMediaSession->Start(nullptr, &startingPosition)))
         break;
 
-      wprintf_s(L"Encoding complete.\n");
+      wprintf_s(L"MediaSession started\n");
     }
     else if (mediaEventType == MEEndOfPresentation)
     {
@@ -419,30 +348,27 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
         wprintf_s(L"Updated sinks for VBR. \n");
       }
     }
-    else if (mediaEventType == MESessionClosed)
+    else if (mediaEventType == MESessionEnded)
     {
-      wprintf_s(L"Encoding session closed.\n");
+      // MediaSession->GetEvent() MUST be called at least once
+      // after making the making the following call to 
+      // MediaSession->Close(), otherwise you'll end up 
+      // with an constant bitrate file instead of a VBR
+      // one.  I have not figured out why.
 
-//      if (!SUCCEEDED(hr = mfMediaSession->Shutdown()))
-//        break;
+      if (!SUCCEEDED(hr = mfMediaSession->Close()))
+        break;
     }
 
     eventStatus = GetNextMediaSessionEvent(mfMediaSession, &mediaEventType, &topologyStatus);
   }
 
-//  hr = mfMediaSession->Close();
+  if (FAILED(hr))
+  {
+    throw std::exception("Error occurred encoding file");
+  }
+
   hr = mfMediaSession->Shutdown();
-
-
-
-
-done:
-//  mfMediaEvent->Release();
-
-
-  
-
-  if (topology) topology->Release();
-
-
+  mfMediaSession->Release();
+  topology->Release();
 }

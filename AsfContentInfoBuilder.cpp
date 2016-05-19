@@ -15,8 +15,6 @@ AsfContentInfoBuilder::AsfContentInfoBuilder()
   _mfMetadataProvider = nullptr;
   _mfMetadata = nullptr;
 
-
-
   do
   {
     if (!SUCCEEDED(hr = MFCreateASFContentInfo(&_mfAsfContentInfo)))
@@ -134,7 +132,7 @@ void AsfContentInfoBuilder::SetMetadataAsString(LPWSTR field, LPWSTR value)
 
   InitPropVariantFromString(value, &pv);
   HRESULT hr = _mfMetadata->SetProperty(field, &pv);
-//  PropVariantClear(&pv);
+  PropVariantClear(&pv);
 }
 
 
