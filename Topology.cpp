@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include "Topology.h"
 
-Topology::Topology(IMFTopology* mfTopology, MediaSink* mediaSink)
+_Topology::_Topology(IMFTopology* mfTopology, MediaSink* mediaSink)
 {
   _mfTopology = mfTopology;
   _mediaSink = mediaSink;
@@ -14,7 +14,7 @@ Topology::Topology(IMFTopology* mfTopology, MediaSink* mediaSink)
   
 
 
-Topology::~Topology()
+_Topology::~_Topology()
 {
   _mfTopology->Release();
 }
@@ -35,7 +35,7 @@ Topology::~Topology()
 //  pTopology: A pointer to the full topology retrieved from the media session.
 //-------------------------------------------------------------------
 
- HRESULT Topology::UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaSink* mediaSink)
+ HRESULT _Topology::UpdateVbrStreamProperties(IMFMediaSession *mfMediaSession, MediaSink* mediaSink)
 {
   IPropertyStore* encoderPropertyStore;
   HRESULT hr;
@@ -216,7 +216,7 @@ return hr;
 //  pTopology:  A pointer to the encoding topology.
 //-------------------------------------------------------------------
 
-HRESULT Topology::Encode(AudioEncoderParameters* encoderParameters)
+HRESULT _Topology::Encode(AudioEncoderParameters* encoderParameters)
 {
 
   IMFMediaSession *mfMediaSession = nullptr;
@@ -358,13 +358,13 @@ done:
 
 
 
-Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* mediaSink, WORD streamNumber)
+_Topology* _Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* mediaSink, WORD streamNumber)
 {
   IMFTopology* mfTopology = nullptr;
   //Create the topology that represents the encoding pipeline
   HRESULT hr = MFCreateTopology(&mfTopology);
 
-  Topology* topology = new Topology(mfTopology, mediaSink);
+  _Topology* topology = new _Topology(mfTopology, mediaSink);
   topology->_buildPartialTopograpy(source, mediaSink, streamNumber);
 
   return topology;
@@ -373,7 +373,7 @@ Topology* Topology::CreatePartialTopograpy(MediaSource* source, MediaSink* media
 
 
 
-void Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink, WORD streamNumber)
+void _Topology::_buildPartialTopograpy(MediaSource* source, MediaSink* sink, WORD streamNumber)
 {
   IMFTopologyNode* encoderNode = nullptr;
   IMFTopologyNode* sourceNode = nullptr;

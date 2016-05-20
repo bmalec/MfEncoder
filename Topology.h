@@ -5,7 +5,7 @@
 #include "AudioEncoder.h"
 
 
-class Topology
+class _Topology
 {
 private:
   IMFTopology* _mfTopology;
@@ -20,13 +20,13 @@ private:
 
 
 protected:
-  Topology(IMFTopology* mfTopology, MediaSink* mediaSink);
+  _Topology(IMFTopology* mfTopology, MediaSink* mediaSink);
 
 public:
-  static Topology* CreatePartialTopograpy(MediaSource* source, MediaSink* sink, WORD streamNumber);  // TODO this should not be separate from Create()
+  static _Topology* CreatePartialTopograpy(MediaSource* source, MediaSink* sink, WORD streamNumber);  // TODO this should not be separate from Create()
   HRESULT Encode(AudioEncoderParameters* encoderParameters);
 
-  ~Topology();
+  ~_Topology();
 
 };
 

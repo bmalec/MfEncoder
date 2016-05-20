@@ -335,8 +335,6 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
 
       if (!SUCCEEDED(hr = mfMediaSession->Start(nullptr, &startingPosition)))
         break;
-
-      wprintf_s(L"MediaSession started\n");
     }
     else if (mediaEventType == MEEndOfPresentation)
     {
@@ -344,14 +342,12 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
       {
         if (!SUCCEEDED(hr = UpdateVbrStreamProperties(audioEncoder, mediaSink)))
           break;
-
-        wprintf_s(L"Updated sinks for VBR. \n");
       }
     }
     else if (mediaEventType == MESessionEnded)
     {
       // MediaSession->GetEvent() MUST be called at least once
-      // after making the making the following call to 
+      // after making the the following call to 
       // MediaSession->Close(), otherwise you'll end up 
       // with an constant bitrate file instead of a VBR
       // one.  I have not figured out why.
@@ -363,12 +359,12 @@ void AudioEncoder::Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioE
     eventStatus = GetNextMediaSessionEvent(mfMediaSession, &mediaEventType, &topologyStatus);
   }
 
+  hr = mfMediaSession->Shutdown();
+  mfMediaSession->Release();
+  topology->Release();
+
   if (FAILED(hr))
   {
     throw std::exception("Error occurred encoding file");
   }
-
-  hr = mfMediaSession->Shutdown();
-  mfMediaSession->Release();
-  topology->Release();
 }
