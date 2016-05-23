@@ -2,7 +2,7 @@
 #include <regex>
 #include "CommandLineParser.h"
 
-enum class CommandLineOption { None, Bitrate, OutputFolder, Title, Artist, Album, Year, Genre, TrackNumber, Quality };
+enum class CommandLineOption { None, Bitrate, OutputFolder, Title, Artist, Album, AlbumArtist, Year, Genre, TrackNumber, Comment, Composer, SubTitle, Quality };
 
 struct ParameterMap
 {
@@ -17,8 +17,12 @@ static ParameterMap parameterMapping[] = {
   { CommandLineOption::Title, L"--tt" },
   { CommandLineOption::Artist, L"--ta" },
   { CommandLineOption::Album, L"--tl" },
+  { CommandLineOption::AlbumArtist, L"--tb" },
   { CommandLineOption::Year, L"--ty" },
   { CommandLineOption::Genre, L"--tg" },
+  { CommandLineOption::Comment, L"--tc" },
+  { CommandLineOption::Composer, L"--to" },
+  { CommandLineOption::SubTitle, L"--ts" },
   { CommandLineOption::TrackNumber, L"--tn" },
   { CommandLineOption::Quality, L"-V" }
 };
@@ -48,6 +52,12 @@ void CommandLineParser::Parse(int argc, wchar_t* argv[], Parameters* parameters)
         pendingOption = CommandLineOption::None;
         break;
 
+      case CommandLineOption::AlbumArtist:
+        parameters->AlbumArtist = currentToken;
+        pendingOption = CommandLineOption::None;
+        break;
+
+
       case CommandLineOption::Genre:
         parameters->Genre = currentToken;
         pendingOption = CommandLineOption::None;
@@ -60,6 +70,21 @@ void CommandLineParser::Parse(int argc, wchar_t* argv[], Parameters* parameters)
 
       case CommandLineOption::TrackNumber:
         parameters->TrackNumber = currentToken;
+        pendingOption = CommandLineOption::None;
+        break;
+
+      case CommandLineOption::Comment:
+        parameters->Comment = currentToken;
+        pendingOption = CommandLineOption::None;
+        break;
+
+      case CommandLineOption::Composer:
+        parameters->Composer = currentToken;
+        pendingOption = CommandLineOption::None;
+        break;
+
+      case CommandLineOption::SubTitle:
+        parameters->SubTitle = currentToken;
         pendingOption = CommandLineOption::None;
         break;
 

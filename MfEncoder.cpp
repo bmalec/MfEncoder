@@ -43,7 +43,7 @@ static void SetMediaSinkContentInfoMetadata(AsfContentInfoBuilder* contentInfo, 
     contentInfo->SetMetadataAsString(L"Author", value);
   }
 
-  value = commandLineParameters->Artist;
+  value = commandLineParameters->AlbumArtist;
 
   if (!value)
   {
@@ -102,6 +102,49 @@ static void SetMediaSinkContentInfoMetadata(AsfContentInfoBuilder* contentInfo, 
   {
     contentInfo->SetMetadataAsString(L"WM/Year", value);
   }
+
+  value = commandLineParameters->Comment;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"Description");
+  }
+
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"Description", value);
+  }
+
+  value = commandLineParameters->Composer;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/Composer");
+  }
+
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"WM/Composer", value);
+  }
+
+  value = commandLineParameters->SubTitle;
+
+  if (!value)
+  {
+    value = mediaSource->GetMetadataValue(L"WM/SubTitle");
+  }
+
+  if (value)
+  {
+    contentInfo->SetMetadataAsString(L"WM/SubTitle", value);
+  }
+
+
+//  contentInfo->SetMetadataAsString(L"Author", L"_Author_");
+//  contentInfo->SetMetadataAsString(L"WM/AlbumArtist", L"_WM/AlbumArtist_");
+
+
+
 }
 
 

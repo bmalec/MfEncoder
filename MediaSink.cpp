@@ -18,24 +18,6 @@ MediaSink::~MediaSink()
 }
 
 
-IMFMediaSink* MediaSink::GetMFMediaSink()
-{
-  return _mfMediaSink;
-}
-
-
-IMFStreamSink* MediaSink::GetMFStreamSinkByIndex(DWORD index)
-{
-  IMFStreamSink* mfStreamSink;
-
-  HRESULT hr;
-
-  if (!SUCCEEDED(hr = _mfMediaSink->GetStreamSinkByIndex(index, &mfStreamSink)))
-    throw std::exception("Unable to retrieve stream sink");
-
-  return mfStreamSink;
-}
-
 MediaSink* MediaSink::Create(const wchar_t *url, IMFASFContentInfo* afsContentInfo)
 {
   IMFActivate* mfActivate = nullptr;
@@ -55,16 +37,6 @@ MediaSink* MediaSink::Create(const wchar_t *url, IMFASFContentInfo* afsContentIn
   return new MediaSink(mfMediaSink, afsContentInfo);
 
 }
-
-/*
-
-IPropertyStore* MediaSink::GetEncoderConfigurationPropertyStore(WORD streamNumber)
-{
-  return _mediaSinkContentInfo->GetEncoderConfigurationPropertyStore(streamNumber);
-
-}
-
-*/
 
 
 IMFTopologyNode* MediaSink::CreateTopologyOutputNode(WORD streamNumber)
@@ -139,7 +111,6 @@ IMFMediaType* MediaSink::GetMediaTypeForStream(WORD streamNumber)
 IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
 {
   IMFTopologyNode* topologyTransformNode = nullptr;
-//  IMFASFStreamConfig *asfStreamConfig = nullptr;
   IMFMediaType* streamMediaType = nullptr;
   IPropertyStore* encodingConfigurationProperties = nullptr;
   IMFActivate* encoderActivationObj = nullptr;
@@ -156,22 +127,24 @@ IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
 
     streamMediaType = GetMediaTypeForStream(streamNumber);
 
-//    IMFASFContentInfo* mfAsfContentInfo = _mediaSinkContentInfo->ConstructMfAsfContentInfo();
+    if (!SUCCEEDED(hr = _mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &encodingConfigurationProperties)))
+      break;
 
-    hr = _mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &encodingConfigurationProperties);
+    if (!SUCCEEDED(hr = MFCreateWMAEncoderActivate(streamMediaType, encodingConfigurationProperties, &encoderActivationObj)))
+      break;
 
-    hr = MFCreateWMAEncoderActivate(streamMediaType, encodingConfigurationProperties, &encoderActivationObj);
-
-    hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &topologyTransformNode);
+    if (!SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &topologyTransformNode)))
+      break;
 
     // Set the object pointer.
-    hr = topologyTransformNode->SetObject(encoderActivationObj);
-
-
+    if (!SUCCEEDED(hr = topologyTransformNode->SetObject(encoderActivationObj)))
+      break;
   } while (0);
 
-  return topologyTransformNode;
+  if (FAILED(hr))
+    throw std::exception("Unable to create topology transform node");
 
+  return topologyTransformNode;
 }
 
 

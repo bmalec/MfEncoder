@@ -4,7 +4,6 @@
 #include <Mferror.h>
 #include <stdexcept>
 #include "Util.h"
-#include "Topology.h"
 #include "AudioEncoder.h"
 
 

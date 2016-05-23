@@ -139,6 +139,8 @@ void AsfContentInfoBuilder::SetMetadataAsString(LPWSTR field, LPWSTR value)
 
 IMFASFContentInfo* AsfContentInfoBuilder::ConstructMfAsfContentInfo()
 {
+  SetMetadataAsString(L"WM/EncodedBy", L"MfEncoder");
+
   _mfAsfContentInfo->SetProfile(_mfAsfProfile);
   return _mfAsfContentInfo;
 }
