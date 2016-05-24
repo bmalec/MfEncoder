@@ -116,7 +116,7 @@ void AsfContentInfoBuilder::AddStreamSink(WORD streamNumber, AudioEncoderParamet
       if (!SUCCEEDED(hr = _mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &streamPropertyStore)))
         break;
 
-      AudioEncoder::SetEncoderPropertyStoreValuesForQualityBasedVbr(streamPropertyStore, encoderParameters->GetQualityLevel());
+      AudioEncoder::SetEncoderPropertiesForQualityBasedVbr(streamPropertyStore, encoderParameters->GetQualityLevel());
     }
   } while (0);
 

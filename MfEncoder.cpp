@@ -151,6 +151,7 @@ static void SetMediaSinkContentInfoMetadata(AsfContentInfoBuilder* contentInfo, 
 int wmain(int argc, wchar_t *argv[])
 {
   Parameters commandLineParameters;
+  HRESULT hr;
 
   if (argc < 1)
   {
@@ -206,13 +207,25 @@ int wmain(int argc, wchar_t *argv[])
     }
   }
 
+  // Initialize COM & Media Foundation
+
+  if (!SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)))
+  {
+    wprintf_s(L"Unable to initialize COM");
+    return -1;
+  }
+
+  if (!SUCCEEDED(MFStartup(MF_VERSION)))
+  {
+    CoUninitialize();
+
+    wprintf_s(L"Unable to initialize MediaFoundation");
+    return -1;
+  }
+
+
   try
   {
-    // Initialize COM & Media Foundation
-
-    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-    HRESULT hr = MFStartup(MF_VERSION);
-
     // Use the Windows shell API to extract the path component from the input filename
 
     wchar_t srcFileFolder[MAX_PATH];

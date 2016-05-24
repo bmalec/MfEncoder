@@ -68,6 +68,7 @@ int AudioEncoderParameters::GetSamplesPerSecond()
 IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderParameters)
 {
   IMFMediaType* result;
+  IPropertyStore *propertyStore = nullptr;  // TODO when can this be released safely?
 
   //We need to find a suitable output media type
   //We need to create the encoder to get the available output types
@@ -92,22 +93,29 @@ IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderP
   // (would I want to instantiate another?  Why?  Which one?)
 
   IMFActivate *activationObj = *transformActivationObjs;
-  IMFTransform *mfEncoder;
+  IMFTransform *mfEncoder = nullptr;
   wchar_t transformName[128];
   UINT32 nameLen;
 
-  activationObj->GetString(MFT_FRIENDLY_NAME_Attribute, transformName, sizeof(transformName), &nameLen);
+  do
+  {
+    if (!SUCCEEDED(hr = activationObj->GetString(MFT_FRIENDLY_NAME_Attribute, transformName, sizeof(transformName), &nameLen)))
+      break;
 
-   hr = activationObj->ActivateObject(IID_PPV_ARGS(&mfEncoder));
+    if (!SUCCEEDED(activationObj->ActivateObject(IID_PPV_ARGS(&mfEncoder))))
+      break;
 
-   IPropertyStore *propertyStore = nullptr;  // TODO when can this be released safely?
+    if (encoderParameters->IsQualityBasedVbr())
+    {
+      if (!SUCCEEDED(hr = mfEncoder->QueryInterface(IID_PPV_ARGS(&propertyStore))))
+        break;
 
-   if (encoderParameters->IsQualityBasedVbr())
-   {
-     hr = mfEncoder->QueryInterface(IID_PPV_ARGS(&propertyStore));
+      SetEncoderPropertiesForQualityBasedVbr(propertyStore, encoderParameters->GetQualityLevel());
+    }
+  } while (0);
 
-     SetEncoderPropertyStoreValuesForQualityBasedVbr(propertyStore, encoderParameters->GetQualityLevel());
-   }
+  if (FAILED(hr))
+    throw std::exception("Unable to activate encoder MFT");
 
   // enumerate output types and try to find the appropriate one for our purposes
 
@@ -151,10 +159,12 @@ IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderP
     }
   }
 
-  propertyStore->Release();
-  mfEncoder->Release();
+  if (propertyStore) propertyStore->Release();
+  if (mfEncoder) mfEncoder->Release();
+  
   activationObj->ShutdownObject();
-
+  activationObj->Release();
+  
   // release all the stupid activation pointers (because COM was such a GREAT idea)
 
   for (UINT32 i = 0; i < transformCount; i++)
@@ -173,7 +183,7 @@ IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderP
 
 
 
-void AudioEncoder::SetEncoderPropertyStoreValuesForQualityBasedVbr(IPropertyStore* propertyStore, int quality)
+void AudioEncoder::SetEncoderPropertiesForQualityBasedVbr(IPropertyStore* propertyStore, int quality)
 {
   SetBooleanPropertyStoreValue(propertyStore, MFPKEY_VBRENABLED, TRUE);
   SetBooleanPropertyStoreValue(propertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, TRUE);
