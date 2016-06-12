@@ -18,7 +18,7 @@ MediaSink::~MediaSink()
 }
 
 
-MediaSink* MediaSink::Create(const wchar_t *url, IMFASFContentInfo* afsContentInfo)
+MediaSink* MediaSink::Create(PCWSTR url, IMFASFContentInfo* afsContentInfo)
 {
   IMFActivate* mfActivate = nullptr;
   IMFMediaSink* mfMediaSink = nullptr;

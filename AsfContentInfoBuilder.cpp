@@ -126,7 +126,7 @@ void AsfContentInfoBuilder::AddStreamSink(WORD streamNumber, AudioEncoderParamet
     throw std::exception("Unable to add stream to the MediaSink");
 }
 
-void AsfContentInfoBuilder::SetMetadataAsString(LPWSTR field, LPWSTR value)
+void AsfContentInfoBuilder::SetMetadataAsString(PCWSTR field, PCWSTR value)
 {
   PROPVARIANT pv;
 

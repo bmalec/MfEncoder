@@ -5,5 +5,5 @@
 class CommandLineParser
 {
 public:
-  static void Parse(int argc, wchar_t* argv[], Parameters* parameters);
+  static void Parse(int argc, PWSTR argv[], Parameters* parameters);
 };

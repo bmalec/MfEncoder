@@ -15,7 +15,7 @@ protected:
   IMFMediaType* GetMediaTypeForStream(WORD streamNumber);
 
 public:
-  static MediaSink *Create(const wchar_t *url, IMFASFContentInfo* asfContentInfo);
+  static MediaSink *Create(PCWSTR url, IMFASFContentInfo* asfContentInfo);
 
   ~MediaSink();
 

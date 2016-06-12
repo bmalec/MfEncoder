@@ -94,7 +94,7 @@ IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderP
 
   IMFActivate *activationObj = *transformActivationObjs;
   IMFTransform *mfEncoder = nullptr;
-  wchar_t transformName[128];
+  WCHAR transformName[128];
   UINT32 nameLen;
 
   do
@@ -163,9 +163,8 @@ IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderP
   if (mfEncoder) mfEncoder->Release();
   
   activationObj->ShutdownObject();
-  activationObj->Release();
   
-  // release all the stupid activation pointers (because COM was such a GREAT idea)
+  // release all the activation pointers that got allocated...
 
   for (UINT32 i = 0; i < transformCount; i++)
   {
@@ -173,8 +172,7 @@ IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderP
     temp->Release();
   }
 
-  // free the stupid activation array object (because COM was such an f'ing great idea)
-  // (did I ever mention I think COM was just... stupid?)
+  // ...and free the activation array object
 
   CoTaskMemFree(transformActivationObjs);
 

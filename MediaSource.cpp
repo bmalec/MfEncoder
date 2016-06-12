@@ -12,20 +12,24 @@ IMFPresentationDescriptor* MediaSource::GetPresentationDescriptor()
 
 void MediaSource::LoadMetadataFromSource()
 {
-  IMFMetadataProvider* mfMetadataProvider;
-  IMFMetadata* mfMetadata;
+  IMFMetadataProvider* mfMetadataProvider = nullptr;
+  IMFMetadata* mfMetadata = nullptr;
   PROPVARIANT metadataKeys, metadataValue;
-  PWSTR *metadataPropertyKeys;
+  PWSTR *metadataPropertyKeys = nullptr;
   HRESULT hr;
 
   _metadataPropertyCount = 0;
   PropVariantInit(&metadataKeys);
   PropVariantInit(&metadataValue);
-  
+
   do
   {
     if (!SUCCEEDED(hr = MFGetService(_mfMediaSource, MF_METADATA_PROVIDER_SERVICE, IID_PPV_ARGS(&mfMetadataProvider))))
+    {
+      // Can't get the metadata provider service for this media source, but that's ok... we'll just skip reading metadata
+      hr = S_OK;
       break;
+    }
 
     if (!SUCCEEDED(hr = mfMetadataProvider->GetMFMetadata(_mfPresentationDescriptor, 0, 0, &mfMetadata)))
       break;
@@ -40,7 +44,7 @@ void MediaSource::LoadMetadataFromSource()
 
     for (ULONG i = 0; i < _metadataPropertyCount; i++)
     {
-      wchar_t *metadataKey = *(metadataPropertyKeys + i);
+      PWSTR metadataKey = *(metadataPropertyKeys + i);
 
       if (!SUCCEEDED(hr = mfMetadata->GetProperty(metadataKey, &metadataValue)))
         break;
@@ -67,6 +71,7 @@ void MediaSource::LoadMetadataFromSource()
     throw std::exception("Error occurred reading metadata from media source");
   }
 }
+
 
 MediaSource::MediaSource(IMFMediaSource *mfMediaSource)
 {
@@ -99,7 +104,7 @@ MediaSource::~MediaSource()
 
 
 
-MediaSource* MediaSource::Open(const wchar_t *url)
+MediaSource* MediaSource::Open(PCWSTR url)
 {
   MF_OBJECT_TYPE ObjectType = MF_OBJECT_INVALID;
 
@@ -135,9 +140,9 @@ IMFMediaSource* MediaSource::GetMFMediaSource()
 }
 
 
-wchar_t* MediaSource::GetMetadataValue(wchar_t *metadataKey)
+PCWSTR MediaSource::GetMetadataValue(PCWSTR metadataKey)
 {
-  wchar_t *result = nullptr;
+  PCWSTR result = nullptr;
 
   for (int i = 0; i < _metadataPropertyCount; i++)
   {

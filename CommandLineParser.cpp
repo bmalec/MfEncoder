@@ -8,7 +8,7 @@ struct ParameterMap
 {
 public:
   CommandLineOption Option;
-  wchar_t* Token;
+  PCWSTR Token;
 };
 
 static ParameterMap parameterMapping[] = {
@@ -28,13 +28,13 @@ static ParameterMap parameterMapping[] = {
 };
 
 
-void CommandLineParser::Parse(int argc, wchar_t* argv[], Parameters* parameters)
+void CommandLineParser::Parse(int argc, PWSTR argv[], Parameters* parameters)
 {
   CommandLineOption pendingOption = CommandLineOption::None;
 
   for (int i = 1; i < argc; i++)
   {
-    wchar_t *currentToken = argv[i];
+    PWSTR currentToken = argv[i];
 
     if (pendingOption != CommandLineOption::None)
     {

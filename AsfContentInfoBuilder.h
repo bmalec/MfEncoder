@@ -10,7 +10,7 @@ public:
   ~AsfContentInfoBuilder();
 
   void AddStreamSink(WORD streamNumber, AudioEncoderParameters* encoderParameters);
-  void SetMetadataAsString(LPWSTR field, LPWSTR value);
+  void SetMetadataAsString(PCWSTR field, PCWSTR value);
   IMFASFContentInfo* ConstructMfAsfContentInfo();
 
 private:

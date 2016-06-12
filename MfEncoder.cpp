@@ -17,7 +17,7 @@ static void SetMediaSinkContentInfoMetadata(AsfContentInfoBuilder* contentInfo, 
 {
   // please work
 
-  wchar_t *value;
+  PCWSTR value;
 
   value = commandLineParameters->Album;
 
@@ -151,7 +151,6 @@ static void SetMediaSinkContentInfoMetadata(AsfContentInfoBuilder* contentInfo, 
 int wmain(int argc, wchar_t *argv[])
 {
   Parameters commandLineParameters;
-  HRESULT hr;
 
   if (argc < 1)
   {
@@ -228,10 +227,10 @@ int wmain(int argc, wchar_t *argv[])
   {
     // Use the Windows shell API to extract the path component from the input filename
 
-    wchar_t srcFileFolder[MAX_PATH];
-    wchar_t srcFileName[MAX_PATH];
+    WCHAR srcFileFolder[MAX_PATH];
+    WCHAR srcFileName[MAX_PATH];
 
-    wcscpy(srcFileFolder, commandLineParameters.InputFilename);
+    wcscpy_s(srcFileFolder, commandLineParameters.InputFilename);
 
     BOOL ret = PathRemoveFileSpec(srcFileFolder);
 
@@ -261,24 +260,31 @@ int wmain(int argc, wchar_t *argv[])
     {
       do
       {
-        wcscpy(srcFileName, srcFileFolder);
-        wcscat(srcFileName, findData.cFileName);
+        if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+          // skip directories
+
+          continue;
+        }
+
+        wcscpy_s(srcFileName, srcFileFolder);
+        wcscat_s(srcFileName, findData.cFileName);
 
         MediaSource* mediaSource = MediaSource::Open(srcFileName);
 
         // if an output folder is specified, use that
 
-        wchar_t outputFilename[MAX_PATH];
+        WCHAR outputFilename[MAX_PATH];
 
         if (*commandLineParameters.OutputFolder)
         {
-          wcscpy(outputFilename, commandLineParameters.OutputFolder);
-          wcscat(outputFilename, findData.cFileName);
+          wcscpy_s(outputFilename, commandLineParameters.OutputFolder);
+          wcscat_s(outputFilename, findData.cFileName);
           PathRenameExtension(outputFilename, L".wma");
         }
         else
         {
-          wcscpy(outputFilename, commandLineParameters.OutputFilename);
+          wcscpy_s(outputFilename, commandLineParameters.OutputFilename);
         }
 
         AsfContentInfoBuilder *contentInfo = new AsfContentInfoBuilder();

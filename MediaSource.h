@@ -23,7 +23,7 @@ protected:
   MediaSource(IMFMediaSource *mfMediaSource);
 
 public:
-  static MediaSource *Open(const wchar_t *url);
+  static MediaSource *Open(PCWSTR url);
   ~MediaSource();
 
   IMFPresentationDescriptor* GetPresentationDescriptor();
@@ -31,5 +31,5 @@ public:
   IMFTopologyNode* CreateTopologySourceNode();
 
   IMFMediaSource* GetMFMediaSource();
-  wchar_t *GetMetadataValue(wchar_t *metadataKey);
+  PCWSTR GetMetadataValue(PCWSTR metadataKey);
 };
