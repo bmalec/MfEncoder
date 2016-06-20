@@ -103,52 +103,6 @@ IMFMediaType* MediaSink::GetMediaTypeForStream(WORD streamNumber)
 }
 
 
-
-
-
-
-
-IMFTopologyNode* MediaSink::CreateTopologyTransformNode(WORD streamNumber)
-{
-  IMFTopologyNode* topologyTransformNode = nullptr;
-  IMFMediaType* streamMediaType = nullptr;
-  IPropertyStore* encodingConfigurationProperties = nullptr;
-  IMFActivate* encoderActivationObj = nullptr;
-  HRESULT hr;
-    
-  do
-  {
-    // Need to get the mediatype for the output stream in order to instatiated the 
-    // encoder.  My first inclination was to get the stream sink like we did in 
-    // CreateTopologyOutputNode, and that could work, but... we also need to
-    // get the encoder configuration parameters, which are tacked on to the 
-    // IMFMediaSinkContentInfo object.  Uggh.  The Microsoft example does a 
-    // little bit of both in order to maximize confusion...
-
-    streamMediaType = GetMediaTypeForStream(streamNumber);
-
-    if (!SUCCEEDED(hr = _mfAsfContentInfo->GetEncodingConfigurationPropertyStore(streamNumber, &encodingConfigurationProperties)))
-      break;
-
-    if (!SUCCEEDED(hr = MFCreateWMAEncoderActivate(streamMediaType, encodingConfigurationProperties, &encoderActivationObj)))
-      break;
-
-    if (!SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &topologyTransformNode)))
-      break;
-
-    // Set the object pointer.
-    if (!SUCCEEDED(hr = topologyTransformNode->SetObject(encoderActivationObj)))
-      break;
-  } while (0);
-
-  if (FAILED(hr))
-    throw std::exception("Unable to create topology transform node");
-
-  return topologyTransformNode;
-}
-
-
-
 IMFTransform* MediaSink::GetAudioEncoderForStream(WORD streamNumber)
 {
   IMFMediaType* streamMediaType = nullptr;

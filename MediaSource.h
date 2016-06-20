@@ -30,6 +30,5 @@ public:
 
   IMFTopologyNode* CreateTopologySourceNode();
 
-  IMFMediaSource* GetMFMediaSource();
   PCWSTR GetMetadataValue(PCWSTR metadataKey);
 };

@@ -12,7 +12,6 @@ public:
   static AudioEncoderParameters* CreateQualityBasedVbrParameters(int qualityLevel, int channelCount, int samplesPerSecond, int bitsPerSample);
   static AudioEncoderParameters* CreateLosslessEncoderParameters(int channelCount, int samplesPerSecond, int bitsPerSample);
 
-
   BOOL IsLossless();
   BOOL IsQualityBasedVbr();
   int GetQualityLevel();

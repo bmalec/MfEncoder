@@ -20,13 +20,8 @@ public:
   ~MediaSink();
 
   IMFTopologyNode* CreateTopologyOutputNode(WORD streamNumber);
-  IMFTopologyNode* CreateTopologyTransformNode(WORD streamNumber);
   IMFTransform* GetAudioEncoderForStream(WORD streamNumber);
   void UpdatePostEncodeStreamSinkProperties(WORD streamNumber, IPropertyStore* encoderProperties);
-
-
-
-
 };
 
 

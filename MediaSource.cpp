@@ -77,7 +77,6 @@ MediaSource::MediaSource(IMFMediaSource *mfMediaSource)
 {
   _mfMediaSource = mfMediaSource;
   _mfMediaSource->CreatePresentationDescriptor(&_mfPresentationDescriptor);
-//  _mfPresentationDescriptor->GetStreamDescriptorCount(&_streamDescriptorCount);
 
   LoadMetadataFromSource();
 }
@@ -132,11 +131,6 @@ MediaSource* MediaSource::Open(PCWSTR url)
   if (mfSourceResolver) mfSourceResolver->Release();
 
   return new MediaSource(mfMediaSource);
-}
-
-IMFMediaSource* MediaSource::GetMFMediaSource()
-{
-  return _mfMediaSource;
 }
 
 

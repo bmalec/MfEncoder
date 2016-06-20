@@ -59,10 +59,6 @@ AsfContentInfoBuilder::AsfContentInfoBuilder()
 }
 
 
-
-
-
-
 AsfContentInfoBuilder::~AsfContentInfoBuilder()
 {
   _mfMetadata->Release();
@@ -70,7 +66,6 @@ AsfContentInfoBuilder::~AsfContentInfoBuilder()
   _mfAsfProfile->Release();
   _mfAsfContentInfo->Release();
 }
-
 
 
 void AsfContentInfoBuilder::AddStreamSink(WORD streamNumber, AudioEncoderParameters* encoderParameters)
@@ -126,6 +121,7 @@ void AsfContentInfoBuilder::AddStreamSink(WORD streamNumber, AudioEncoderParamet
     throw std::exception("Unable to add stream to the MediaSink");
 }
 
+
 void AsfContentInfoBuilder::SetMetadataAsString(PCWSTR field, PCWSTR value)
 {
   PROPVARIANT pv;
@@ -136,7 +132,6 @@ void AsfContentInfoBuilder::SetMetadataAsString(PCWSTR field, PCWSTR value)
 }
 
 
-
 IMFASFContentInfo* AsfContentInfoBuilder::ConstructMfAsfContentInfo()
 {
   SetMetadataAsString(L"WM/EncodedBy", L"MfEncoder");
@@ -144,4 +139,3 @@ IMFASFContentInfo* AsfContentInfoBuilder::ConstructMfAsfContentInfo()
   _mfAsfContentInfo->SetProfile(_mfAsfProfile);
   return _mfAsfContentInfo;
 }
-
