@@ -3,6 +3,7 @@
 #include <wmcodecdsp.h>
 #include <Mferror.h>
 #include <stdexcept>
+#include <propvarutil.h>
 #include "AudioEncoder.h"
 
 
@@ -45,7 +46,7 @@ static void SetUint32PropertyStoreValue(IPropertyStore* propertyStore, const PRO
 }
 
 
-AudioEncoderParameters::AudioEncoderParameters(CompressionFamily compressionFamily, int qualityLevel, int channelCount, int samplesPerSecond, int bitsPerSample)
+AudioEncoderParameters::AudioEncoderParameters(CompressionFamily compressionFamily, UINT32 qualityLevel, UINT32 channelCount, UINT32 samplesPerSecond, UINT32 bitsPerSample)
 {
   _compressionFamily = compressionFamily;
   _qualityLevel = qualityLevel;
@@ -54,7 +55,7 @@ AudioEncoderParameters::AudioEncoderParameters(CompressionFamily compressionFami
   _bitsPerSample = bitsPerSample;
 }
 
-AudioEncoderParameters* AudioEncoderParameters::CreateQualityBasedVbrParameters(int qualityLevel, int channelCount, int samplesPerSecond, int bitsPerSample)
+AudioEncoderParameters* AudioEncoderParameters::CreateQualityBasedVbrParameters(UINT32 qualityLevel, UINT32 channelCount, UINT32 samplesPerSecond, UINT32 bitsPerSample)
 {
   // TODO add parameter validation
 
@@ -62,7 +63,7 @@ AudioEncoderParameters* AudioEncoderParameters::CreateQualityBasedVbrParameters(
 }
 
 
-AudioEncoderParameters* AudioEncoderParameters::CreateLosslessEncoderParameters(int channelCount, int samplesPerSecond, int bitsPerSample)
+AudioEncoderParameters* AudioEncoderParameters::CreateLosslessEncoderParameters(UINT32 channelCount, UINT32 samplesPerSecond, UINT32 bitsPerSample)
 {
   return new AudioEncoderParameters(CompressionFamily::Lossless, 100, channelCount, samplesPerSecond, bitsPerSample);
 }
@@ -80,24 +81,24 @@ BOOL AudioEncoderParameters::IsQualityBasedVbr()
 }
 
 
-int AudioEncoderParameters::GetQualityLevel()
+UINT32 AudioEncoderParameters::GetQualityLevel()
 {
   return _qualityLevel;
 }
 
 
-int AudioEncoderParameters::GetChannelCount()
+UINT32 AudioEncoderParameters::GetChannelCount()
 {
   return _channelCount;
 }
 
-int AudioEncoderParameters::GetBitsPerSample()
+UINT32 AudioEncoderParameters::GetBitsPerSample()
 {
   return _bitsPerSample;
 }
 
 
-int AudioEncoderParameters::GetSamplesPerSecond()
+UINT32 AudioEncoderParameters::GetSamplesPerSecond()
 {
   return _samplesPerSecond;
 }
@@ -219,7 +220,7 @@ IMFMediaType* AudioEncoder::GetEncoderMediaType(AudioEncoderParameters* encoderP
 
 
 
-void AudioEncoder::SetEncoderPropertiesForQualityBasedVbr(IPropertyStore* propertyStore, int quality)
+void AudioEncoder::SetEncoderPropertiesForQualityBasedVbr(IPropertyStore* propertyStore, UINT32 quality)
 {
   SetBooleanPropertyStoreValue(propertyStore, MFPKEY_VBRENABLED, TRUE);
   SetBooleanPropertyStoreValue(propertyStore, MFPKEY_CONSTRAIN_ENUMERATED_VBRQUALITY, TRUE);

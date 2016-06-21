@@ -9,25 +9,25 @@ class AudioEncoderParameters
   enum class CompressionFamily {Lossless, ConstantBitRate, QualityBasedVariableBitRate};
 
 public:
-  static AudioEncoderParameters* CreateQualityBasedVbrParameters(int qualityLevel, int channelCount, int samplesPerSecond, int bitsPerSample);
-  static AudioEncoderParameters* CreateLosslessEncoderParameters(int channelCount, int samplesPerSecond, int bitsPerSample);
+  static AudioEncoderParameters* CreateQualityBasedVbrParameters(UINT32 qualityLevel, UINT32 channelCount, UINT32 samplesPerSecond, UINT32 bitsPerSample);
+  static AudioEncoderParameters* CreateLosslessEncoderParameters(UINT32 channelCount, UINT32 samplesPerSecond, UINT32 bitsPerSample);
 
   BOOL IsLossless();
   BOOL IsQualityBasedVbr();
-  int GetQualityLevel();
-  int GetChannelCount();
-  int GetSamplesPerSecond();
-  int GetBitsPerSample();
+  UINT32 GetQualityLevel();
+  UINT32 GetChannelCount();
+  UINT32 GetSamplesPerSecond();
+  UINT32 GetBitsPerSample();
 
 protected:
-  AudioEncoderParameters(CompressionFamily compressionFamily, int qualityLevel, int channelCount, int samplesPerSecond, int bitsPerSample);
+  AudioEncoderParameters(CompressionFamily compressionFamily, UINT32 qualityLevel, UINT32 channelCount, UINT32 samplesPerSecond, UINT32 bitsPerSample);
 
 private:
   CompressionFamily _compressionFamily;
-  int _qualityLevel;
-  int _channelCount;
-  int _samplesPerSecond;
-  int _bitsPerSample;
+  UINT32 _qualityLevel;
+  UINT32 _channelCount;
+  UINT32 _samplesPerSecond;
+  UINT32 _bitsPerSample;
 };
 
 
@@ -35,7 +35,7 @@ class AudioEncoder
 {
 public:
   static IMFMediaType* GetEncoderMediaType(AudioEncoderParameters* encoderParameters);
-  static void SetEncoderPropertiesForQualityBasedVbr(IPropertyStore* propertyStore, int quality);
+  static void SetEncoderPropertiesForQualityBasedVbr(IPropertyStore* propertyStore, UINT32 quality);
   static void Encode(MediaSource* mediaSource, MediaSink* mediaSink, AudioEncoderParameters* encoderParameters);
 
 private:

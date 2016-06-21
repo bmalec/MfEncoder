@@ -6,7 +6,7 @@
 struct Parameters
 {
 public:
-  INT32 Bitrate = -1;
+  UINT32 Bitrate;
   PCWSTR Title;
   PCWSTR SubTitle;
   PCWSTR Artist;
@@ -17,7 +17,7 @@ public:
   PCWSTR Year;
   PCWSTR TrackNumber;
   PCWSTR Genre;
-  UINT8 Quality = 0;
+  UINT8 Quality;
   WCHAR InputFilename[MAX_PATH];
   WCHAR OutputFilename[MAX_PATH];
   WCHAR OutputFolder[MAX_PATH];
@@ -35,7 +35,7 @@ public:
     Composer = nullptr;
     AlbumArtist = nullptr;
 
-    Bitrate = -1;
+    Bitrate = 0;
     Quality = 75;
 
     *InputFilename = '\0';

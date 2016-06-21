@@ -138,7 +138,7 @@ PCWSTR MediaSource::GetMetadataValue(PCWSTR metadataKey)
 {
   PCWSTR result = nullptr;
 
-  for (int i = 0; i < _metadataPropertyCount; i++)
+  for (ULONG i = 0; i < _metadataPropertyCount; i++)
   {
     if (wcscmp((_metadata + i)->Key, metadataKey) == 0)
     {
@@ -162,6 +162,8 @@ IMFTopologyNode* MediaSource::CreateTopologySourceNode()
 
   do
   {
+    // Iterate through the source streams to find the currently selected one
+
     if (!SUCCEEDED(hr = _mfPresentationDescriptor->GetStreamDescriptorCount(&streamDescriptorCount)))
       break;
 
@@ -206,7 +208,7 @@ IMFTopologyNode* MediaSource::CreateTopologySourceNode()
     throw std::exception("Could not create topology source node");
   }
 
-  // todo: should mfStreamDescriptor be released here?
-
+  mfStreamDescriptor->Release();
+  
   return mfTopologyNode;
 }
